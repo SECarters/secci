@@ -266,6 +266,15 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
   };
 
   const handleSelectChange = (name, value) => {
+    if (name === 'deliveryTypeId') {
+      const selectedType = deliveryTypes.find(dt => dt.id === value);
+      if (selectedType) {
+        const manitouCodes = ['UPDWN', 'UNITUP', 'MANS'];
+        const requiresManitou = manitouCodes.includes(selectedType.code);
+        setFormData(prev => ({ ...prev, deliveryTypeId: value, requiresManitou }));
+        return;
+      }
+    }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -384,6 +393,7 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
         pickupLocation: `${selectedLocation.company} - ${selectedLocation.name}`,
         status: newStatus,
         isDifficultDelivery: isDifficult,
+        requiresManitou: formData.requiresManitou || false,
         nonStandardDelivery: hasNonStandard ? {
           longWalk: formData.nonStandardDelivery.longWalk || false,
           longWalkDistance: formData.nonStandardDelivery.longWalkDistance ? Number(formData.nonStandardDelivery.longWalkDistance) : undefined,
