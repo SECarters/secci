@@ -92,12 +92,8 @@ export default function DashboardPage() {
           ].filter(Boolean);
           filteredJobs = filteredJobs.filter(job => allowedCustomerIds.includes(job.customerId));
         } else if (isOutreach) {
-          // Outreach: filter by Manitou delivery types
-          const manitouCodes = ['UPDWN', 'UNITUP', 'MANS'];
-          const manitouTypeIds = deliveryTypes
-            .filter(dt => manitouCodes.includes(dt.code))
-            .map(dt => dt.id);
-          filteredJobs = filteredJobs.filter(job => manitouTypeIds.includes(job.deliveryTypeId));
+          // Outreach: filter by requiresManitou flag
+          filteredJobs = filteredJobs.filter(job => job.requiresManitou === true);
         }
         // Admin, dispatcher, manager: see all jobs (no additional filtering)
 
