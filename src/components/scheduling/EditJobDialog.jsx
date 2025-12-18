@@ -268,12 +268,10 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
   const handleSelectChange = (name, value) => {
     if (name === 'deliveryTypeId') {
       const selectedType = deliveryTypes.find(dt => dt.id === value);
-      if (selectedType) {
-        const manitouCodes = ['UPDWN', 'UNITUP', 'MANS'];
-        const requiresManitou = manitouCodes.includes(selectedType.code);
-        setFormData(prev => ({ ...prev, deliveryTypeId: value, requiresManitou }));
-        return;
-      }
+      const manitouCodes = ['UPDWN', 'UNITUP', 'MANS'];
+      const requiresManitou = selectedType ? manitouCodes.includes(selectedType.code) : false;
+      setFormData(prev => ({ ...prev, deliveryTypeId: value, requiresManitou }));
+      return;
     }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
