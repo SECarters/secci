@@ -223,7 +223,6 @@ const DriverNav = ({ collapsed, onNavigate }) =>
 
 const CustomerNav = ({ collapsed, onNavigate }) =>
   <>
-    <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
     <NavLink to={createPageUrl('AdminJobs')} icon={Briefcase} collapsed={collapsed} onClick={onNavigate}>My Jobs</NavLink>
     <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Schedule</NavLink>
     <NavLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} collapsed={collapsed} onClick={onNavigate}>Request Delivery</NavLink>
@@ -503,6 +502,9 @@ export default function Layout({ children, currentPageName }) {
     }
     if (isDriver) {
       return 'Drivers';
+    }
+    if (user.appRole === 'outreach' || user.appRole === 'outreachOperator') {
+      return 'Outreach Hire';
     }
     return 'Dispatch';
   };
