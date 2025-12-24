@@ -325,7 +325,17 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         if (directUploadUrls.length === 0) {
           console.error('All direct uploads failed. Errors:', directUploadErrors);
           setErrors(directUploadErrors);
-          throw new Error('All photos failed to be processed. Please try taking new photos or selecting different images.');
+          throw new Error(`Unable to upload photos. This may be due to file size, internet connection, or file format. Please try: 1) Taking fewer photos, 2) Using different photos, or 3) Checking your connection.`);
+        }
+        
+        // Allow partial success - if at least 50% of photos uploaded, consider it a success
+        if (directUploadUrls.length < photos.length * 0.5) {
+          console.warn(`Only ${directUploadUrls.length} of ${photos.length} photos uploaded successfully`);
+          toast({
+            title: "Partial Upload",
+            description: `Only ${directUploadUrls.length} of ${photos.length} photos could be uploaded. You may want to retry with fewer or different photos.`,
+            variant: "warning",
+          });
         }
         
         console.log(`Direct upload succeeded for ${directUploadUrls.length} out of ${photos.length} photos`);
@@ -476,7 +486,17 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
       setProcessingIndex(-1);
 
       if (uploadedUrls.length === 0 && compressedPhotosDataURLs.length > 0) {
-        throw new Error('No photos were successfully uploaded. Please check your internet connection and try again.');
+        throw new Error('No photos were successfully uploaded. Please try: 1) Using fewer photos, 2) Checking your internet connection, or 3) Taking new photos.');
+      }
+      
+      // Allow partial success - if at least 50% of photos uploaded, proceed
+      if (uploadedUrls.length < compressedPhotosDataURLs.length * 0.5 && uploadedUrls.length > 0) {
+        console.warn(`Only ${uploadedUrls.length} of ${compressedPhotosDataURLs.length} photos uploaded successfully`);
+        toast({
+          title: "Partial Upload Warning",
+          description: `Only ${uploadedUrls.length} of ${compressedPhotosDataURLs.length} photos uploaded. Proceeding anyway.`,
+          variant: "warning",
+        });
       }
 
       const existingPodFiles = job.podFiles || [];
