@@ -32,7 +32,6 @@ import {
   BarChart3
 } from 'lucide-react';
 
-import ChatWidget from './components/chat/ChatWidget';
 import { OfflineProvider } from './components/offline/OfflineManager';
 import ReturnedJobAlert from './components/scheduling/ReturnedJobAlert';
 
