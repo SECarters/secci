@@ -677,7 +677,6 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </div>
 
-      <ChatWidget />
       <Toaster />
       
       {/* Returned Job Alert Popup */}
