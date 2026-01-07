@@ -242,10 +242,9 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
                 ✓
               </Badge>
             )}
-          </div>
-
-          <div className="font-semibold truncate text-sm mb-0.5 text-gray-900">
-            {job.customerName}
+            <div className="font-semibold truncate text-sm text-gray-900">
+              {job.customerName}
+            </div>
           </div>
           <div className="text-[11px] leading-tight text-gray-700">
             {addressParts.unit && <div className="truncate">{addressParts.unit}</div>}
