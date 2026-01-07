@@ -1,6 +1,7 @@
 import AccessPending from './pages/AccessPending';
 import AdminCustomers from './pages/AdminCustomers';
 import AdminDeliveryTypes from './pages/AdminDeliveryTypes';
+import AdminJobs from './pages/AdminJobs';
 import AdminPickupLocations from './pages/AdminPickupLocations';
 import AdminUsers from './pages/AdminUsers';
 import CustomerRequestDelivery from './pages/CustomerRequestDelivery';
@@ -22,6 +23,7 @@ export const PAGES = {
     "AccessPending": AccessPending,
     "AdminCustomers": AdminCustomers,
     "AdminDeliveryTypes": AdminDeliveryTypes,
+    "AdminJobs": AdminJobs,
     "AdminPickupLocations": AdminPickupLocations,
     "AdminUsers": AdminUsers,
     "CustomerRequestDelivery": CustomerRequestDelivery,
