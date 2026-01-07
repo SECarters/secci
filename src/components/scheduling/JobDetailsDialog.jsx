@@ -337,10 +337,10 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl w-[95vw] sm:w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>Job Details</span>
+            <DialogTitle className="flex items-center justify-between gap-2">
+              <span className="text-base sm:text-lg">Job Details</span>
               <Badge className={getStatusColor(currentJob.status)}>
                 {currentJob.status.replace(/_/g, ' ')}
               </Badge>
@@ -349,23 +349,29 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
 
           <Tabs defaultValue="details" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="details" className="text-xs sm:text-sm">Details</TabsTrigger>
               {/* Updated Trigger for Delivery POD */}
-              <TabsTrigger value="delivery">
-                Delivery POD ({(currentJob.podFiles || []).length})
+              <TabsTrigger value="delivery" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Delivery POD</span>
+                <span className="sm:hidden">POD</span>
+                <span className="ml-1">({(currentJob.podFiles || []).length})</span>
               </TabsTrigger>
-              <TabsTrigger value="photos">Extra Photos ({(currentJob.jobPhotos || []).length})</TabsTrigger>
+              <TabsTrigger value="photos" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Extra Photos</span>
+                <span className="sm:hidden">Photos</span>
+                <span className="ml-1">({(currentJob.jobPhotos || []).length})</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="details" className="space-y-4 mt-4">
               {isDriver && (
                 <Card className="bg-blue-50 border-blue-200">
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <Button
                       onClick={handleOpenNavigation}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base"
                     >
-                      <Navigation className="h-5 w-5 mr-2" />
+                      <Navigation className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                       Navigate to Delivery Location
                     </Button>
                   </CardContent>
@@ -373,44 +379,46 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
               )}
 
               <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex flex-wrap gap-2">
                     {canEdit && currentJob.status === 'PENDING_APPROVAL' && (
-                      <Button onClick={handleApprove} size="sm" className="bg-green-600 hover:bg-green-700">
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                      <Button onClick={handleApprove} size="sm" className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm">
+                        <CheckCircle2 className="h-4 w-4 mr-1 sm:mr-2" />
                         Approve Job
                       </Button>
                     )}
 
                     {canEdit && (currentJob.status === 'APPROVED' || currentJob.status === 'PENDING_APPROVAL') && (
-                      <Button onClick={() => setScheduleDialogOpen(true)} size="sm" variant="outline">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Schedule
+                      <Button onClick={() => setScheduleDialogOpen(true)} size="sm" variant="outline" className="text-xs sm:text-sm">
+                        <Calendar className="h-4 w-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Schedule</span>
                       </Button>
                     )}
 
                     {canEdit && (
-                      <Button onClick={() => setEditDialogOpen(true)} size="sm" variant="outline">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
+                      <Button onClick={() => setEditDialogOpen(true)} size="sm" variant="outline" className="text-xs sm:text-sm">
+                        <Edit className="h-4 w-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Edit</span>
                       </Button>
                     )}
 
                     {isDriver && currentJob.status === 'SCHEDULED' && (
                       <>
-                        <Button onClick={() => setPodDialogOpen(true)} size="sm" className="bg-green-600 hover:bg-green-700">
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload POD
+                        <Button onClick={() => setPodDialogOpen(true)} size="sm" className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm">
+                          <Upload className="h-4 w-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Upload POD</span>
+                          <span className="sm:hidden">POD</span>
                         </Button>
-                        <Button onClick={() => setReturnDialogOpen(true)} size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
-                          <ArrowLeft className="h-4 w-4 mr-2" />
-                          Return Job
+                        <Button onClick={() => setReturnDialogOpen(true)} size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50 text-xs sm:text-sm">
+                          <ArrowLeft className="h-4 w-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Return Job</span>
+                          <span className="sm:hidden">Return</span>
                         </Button>
                       </>
                     )}
 
                     {canEdit && (currentJob.status === 'SCHEDULED' || currentJob.status === 'DELIVERED') && (
-                      <Button 
+                      <Button
                         onClick={async () => {
                           try {
                             const newStatus = currentJob.status === 'DELIVERED' ? 'SCHEDULED' : 'DELIVERED';
@@ -441,30 +449,32 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                           }
                         }}
                         size="sm" 
-                        className={currentJob.status === 'DELIVERED' 
+                        className={`text-xs sm:text-sm ${currentJob.status === 'DELIVERED' 
                           ? "bg-orange-600 hover:bg-orange-700" 
-                          : "bg-green-600 hover:bg-green-700"}
-                      >
+                          : "bg-green-600 hover:bg-green-700"}`}
+                        >
                         {currentJob.status === 'DELIVERED' ? (
                           <>
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Revert to Scheduled
+                            <XCircle className="h-4 w-4 mr-1 sm:mr-2" />
+                            <span className="hidden sm:inline">Revert to Scheduled</span>
+                            <span className="sm:hidden">Revert</span>
                           </>
                         ) : (
                           <>
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
-                            Complete Delivery
+                            <CheckCircle2 className="h-4 w-4 mr-1 sm:mr-2" />
+                            <span className="hidden sm:inline">Complete Delivery</span>
+                            <span className="sm:hidden">Complete</span>
                           </>
                         )}
-                      </Button>
-                    )}
+                        </Button>
+                        )}
 
-                    {canEdit && currentJob.status !== 'CANCELLED' && currentJob.status !== 'DELIVERED' && (
-                      <Button onClick={handleCancel} size="sm" variant="destructive">
-                        <XCircle className="h-4 w-4 mr-2" />
+                        {canEdit && currentJob.status !== 'CANCELLED' && currentJob.status !== 'DELIVERED' && (
+                        <Button onClick={handleCancel} size="sm" variant="destructive" className="text-xs sm:text-sm">
+                        <XCircle className="h-4 w-4 mr-1 sm:mr-2" />
                         Cancel
-                      </Button>
-                    )}
+                        </Button>
+                        )}
                   </div>
                 </CardContent>
               </Card>
@@ -811,8 +821,8 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                   </div>
 
                   {currentJob.podFiles && currentJob.podFiles.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"> {/* Added lg:grid-cols-4 */}
+                  <div className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
                         {currentJob.podFiles.map((url, index) => (
                           <div key={index} className="relative group">
                             <img
@@ -826,12 +836,12 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                               POD {index + 1}
                             </Badge>
 
-                            {/* Action Buttons for POD */}
-                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {/* Action Buttons for POD - Always visible on mobile */}
+                            <div className="absolute top-1 right-1 sm:top-2 sm:right-2 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                               <Button
                                 size="icon"
                                 variant="secondary"
-                                className="h-7 w-7 bg-white/90 hover:bg-white"
+                                className="h-6 w-6 sm:h-7 sm:w-7 bg-white/90 hover:bg-white"
                                 onClick={() => setFullScreenImage(url)}
                                 aria-label="View full size"
                               >
@@ -840,7 +850,7 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                               <Button
                                 size="icon"
                                 variant="secondary"
-                                className="h-7 w-7 bg-white/90 hover:bg-white"
+                                className="h-6 w-6 sm:h-7 sm:w-7 bg-white/90 hover:bg-white"
                                 onClick={() => handleDownloadImage(url, `POD-${currentJob.id}-${index + 1}.jpg`)}
                                 aria-label="Download image"
                               >
@@ -850,7 +860,7 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                                 <Button
                                   size="icon"
                                   variant="destructive"
-                                  className="h-7 w-7"
+                                  className="h-6 w-6 sm:h-7 sm:w-7"
                                   onClick={() => handleDeletePodPhoto(index)}
                                   disabled={deletingPodIndex === index}
                                   aria-label="Delete POD photo"
@@ -933,7 +943,7 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                       <p className="text-sm mt-1">Long walk, bad or unsafe access, other non-standard delivery</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                       {currentJob.jobPhotos.map((photo, index) => (
                         <div key={index} className="relative group">
                           <img
@@ -944,12 +954,12 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                             onClick={() => setFullScreenImage(photo.url)} // Changed to open full screen
                           />
 
-                          {/* Action Buttons for Extra Photos */}
-                          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {/* Action Buttons for Extra Photos - Always visible on mobile */}
+                          <div className="absolute top-1 right-1 sm:top-2 sm:right-2 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                             <Button
                               size="icon"
                               variant="secondary"
-                              className="h-7 w-7 bg-white/90 hover:bg-white"
+                              className="h-6 w-6 sm:h-7 sm:w-7 bg-white/90 hover:bg-white"
                               onClick={() => setFullScreenImage(photo.url)}
                               aria-label="View full size"
                             >
@@ -958,7 +968,7 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                             <Button
                               size="icon"
                               variant="secondary"
-                              className="h-7 w-7 bg-white/90 hover:bg-white"
+                              className="h-6 w-6 sm:h-7 sm:w-7 bg-white/90 hover:bg-white"
                               onClick={() => handleDownloadImage(photo.url, `Extra-${currentJob.id}-${index + 1}.jpg`)}
                               aria-label="Download image"
                             >
@@ -968,7 +978,7 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                               <Button
                                 size="icon"
                                 variant="destructive"
-                                className="h-7 w-7"
+                                className="h-6 w-6 sm:h-7 sm:w-7"
                                 onClick={() => handleDeletePhoto(index)}
                                 aria-label="Delete photo"
                               >
@@ -1056,18 +1066,18 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
       {/* Full Screen Image Viewer - Added */}
       {fullScreenImage && (
         <Dialog open={!!fullScreenImage} onOpenChange={() => setFullScreenImage(null)}>
-          <DialogContent className="max-w-6xl max-h-[95vh] p-2">
+          <DialogContent className="max-w-6xl w-[98vw] sm:w-full max-h-[98vh] p-1 sm:p-2">
             <div className="relative">
               <img
                 src={fullScreenImage}
                 alt="Full size"
                 loading="lazy"
-                className="w-full h-auto max-h-[90vh] object-contain rounded-lg"
+                className="w-full h-auto max-h-[92vh] object-contain rounded-lg"
               />
               <Button
                 size="icon"
                 variant="secondary"
-                className="absolute top-2 right-2 bg-white/90 hover:bg-white"
+                className="absolute top-1 right-1 sm:top-2 sm:right-2 h-8 w-8 sm:h-10 sm:w-10 bg-white/90 hover:bg-white"
                 onClick={() => setFullScreenImage(null)}
                 aria-label="Close"
               >
@@ -1076,12 +1086,12 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
               <Button
                 size="sm"
                 variant="secondary"
-                className="absolute bottom-2 right-2 bg-white/90 hover:bg-white"
+                className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-white/90 hover:bg-white text-xs sm:text-sm"
                 onClick={() => handleDownloadImage(fullScreenImage, 'delivery-photo.jpg')}
                 aria-label="Download image"
               >
-                <Download className="h-4 w-4 mr-2" />
-                Download
+                <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Download</span>
               </Button>
             </div>
           </DialogContent>
