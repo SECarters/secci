@@ -574,10 +574,12 @@ export default function DailyJobBoard() {
                                         {currentUser?.appRole === 'customer' ? (
                                           <>
                                             <p className="font-semibold text-sm text-gray-900">
-                                              {job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}
+                                              {job.deliverySuburb || job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}
                                             </p>
                                             <p className="text-xs text-gray-600">
-                                              {job.deliveryLocation}
+                                              {job.deliveryStreetNumber && job.deliveryStreetName 
+                                                ? `${job.deliveryStreetNumber} ${job.deliveryStreetName}${job.deliveryStreetType ? ' ' + job.deliveryStreetType : ''}`
+                                                : job.deliveryLocation}
                                             </p>
                                           </>
                                         ) : (
@@ -710,8 +712,12 @@ export default function DailyJobBoard() {
                                   )}
                                   {currentUser?.appRole === 'customer' ? (
                                     <>
-                                      <p className="font-semibold text-sm">{job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}</p>
-                                      <p className="text-xs text-gray-600">{job.deliveryLocation}</p>
+                                      <p className="font-semibold text-sm">{job.deliverySuburb || job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}</p>
+                                      <p className="text-xs text-gray-600">
+                                        {job.deliveryStreetNumber && job.deliveryStreetName 
+                                          ? `${job.deliveryStreetNumber} ${job.deliveryStreetName}${job.deliveryStreetType ? ' ' + job.deliveryStreetType : ''}`
+                                          : job.deliveryLocation}
+                                      </p>
                                     </>
                                   ) : (
                                     <>
@@ -1049,10 +1055,12 @@ export default function DailyJobBoard() {
                                         {currentUser?.appRole === 'customer' ? (
                                           <>
                                             <h4 className="font-semibold text-sm mb-0.5 text-gray-900">
-                                              {job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}
+                                              {job.deliverySuburb || job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}
                                             </h4>
                                             <p className="text-xs truncate text-gray-600">
-                                              {job.deliveryLocation}
+                                              {job.deliveryStreetNumber && job.deliveryStreetName 
+                                                ? `${job.deliveryStreetNumber} ${job.deliveryStreetName}${job.deliveryStreetType ? ' ' + job.deliveryStreetType : ''}`
+                                                : job.deliveryLocation}
                                             </p>
                                           </>
                                         ) : (
@@ -1185,8 +1193,12 @@ export default function DailyJobBoard() {
                             >
                               {currentUser?.appRole === 'customer' ? (
                                 <>
-                                  <p className="font-semibold truncate">{job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}</p>
-                                  <p className="text-xs text-gray-500 truncate">{job.deliveryLocation}</p>
+                                  <p className="font-semibold truncate">{job.deliverySuburb || job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}</p>
+                                  <p className="text-xs text-gray-500 truncate">
+                                    {job.deliveryStreetNumber && job.deliveryStreetName 
+                                      ? `${job.deliveryStreetNumber} ${job.deliveryStreetName}${job.deliveryStreetType ? ' ' + job.deliveryStreetType : ''}`
+                                      : job.deliveryLocation}
+                                  </p>
                                 </>
                               ) : (
                                 <p className="font-semibold truncate">{job.customerName}</p>

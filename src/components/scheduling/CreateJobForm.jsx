@@ -865,7 +865,13 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                         ...prev,
                         deliveryLocation: data.address,
                         deliveryLatitude: data.latitude,
-                        deliveryLongitude: data.longitude
+                        deliveryLongitude: data.longitude,
+                        deliveryStreetNumber: data.streetNumber,
+                        deliveryStreetName: data.streetName,
+                        deliveryStreetType: data.streetType,
+                        deliverySuburb: data.suburb,
+                        deliveryState: data.state,
+                        deliveryPostcode: data.postcode
                       }));
                     }}
                     placeholder="Start typing to search saved addresses..."

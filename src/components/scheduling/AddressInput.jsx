@@ -82,6 +82,12 @@ export default function AddressInput({
       address: addr.address,
       latitude: addr.latitude,
       longitude: addr.longitude,
+      streetNumber: addr.streetNumber,
+      streetName: addr.streetName,
+      streetType: addr.streetType,
+      suburb: addr.suburb,
+      state: addr.state,
+      postcode: addr.postcode,
       customerName: addr.customerName,
       siteNotes: addr.siteNotes,
       id: addr.id,
@@ -175,6 +181,12 @@ export default function AddressInput({
         address: suggestion.address,
         latitude: suggestion.latitude,
         longitude: suggestion.longitude,
+        streetNumber: suggestion.streetNumber,
+        streetName: suggestion.streetName,
+        streetType: suggestion.streetType,
+        suburb: suggestion.suburb,
+        state: suggestion.state,
+        postcode: suggestion.postcode,
         siteNotes: suggestion.siteNotes
       });
       
@@ -208,7 +220,13 @@ export default function AddressInput({
           onAddressConfirmed?.({
             address: result.address,
             latitude: result.latitude,
-            longitude: result.longitude
+            longitude: result.longitude,
+            streetNumber: result.streetNumber,
+            streetName: result.streetName,
+            streetType: result.streetType,
+            suburb: result.suburb,
+            state: result.state,
+            postcode: result.postcode
           });
 
           // Save to local database for future use
@@ -217,6 +235,7 @@ export default function AddressInput({
               address: result.address,
               streetNumber: result.streetNumber,
               streetName: result.streetName,
+              streetType: result.streetType,
               suburb: result.suburb,
               state: result.state,
               postcode: result.postcode,
@@ -246,7 +265,13 @@ export default function AddressInput({
       onAddressConfirmed?.({
         address: geocoded.formattedAddress || suggestion.address,
         latitude: geocoded.latitude,
-        longitude: geocoded.longitude
+        longitude: geocoded.longitude,
+        streetNumber: geocoded.streetNumber,
+        streetName: geocoded.streetName,
+        streetType: geocoded.streetType,
+        suburb: geocoded.suburb,
+        state: geocoded.state,
+        postcode: geocoded.postcode
       });
     }
   };
@@ -262,7 +287,13 @@ export default function AddressInput({
       onAddressConfirmed?.({
         address: geocoded.formattedAddress,
         latitude: geocoded.latitude,
-        longitude: geocoded.longitude
+        longitude: geocoded.longitude,
+        streetNumber: geocoded.streetNumber,
+        streetName: geocoded.streetName,
+        streetType: geocoded.streetType,
+        suburb: geocoded.suburb,
+        state: geocoded.state,
+        postcode: geocoded.postcode
       });
 
       // Save to own dataset for future use
@@ -273,6 +304,9 @@ export default function AddressInput({
         if (!existing) {
           await base44.entities.AddressLookup.create({
             address: geocoded.formattedAddress,
+            streetNumber: geocoded.streetNumber,
+            streetName: geocoded.streetName,
+            streetType: geocoded.streetType,
             suburb: geocoded.suburb,
             state: geocoded.state,
             postcode: geocoded.postcode,
