@@ -155,10 +155,7 @@ export default function SchedulingBoard() {
       setNotificationReadStatus(readStatusList);
       setPickupLocations(allPickupLocations);
 
-      const assignedJobIds = new Set(visibleJobs.filter(j => 
-        j.status === 'SCHEDULED' || 
-        j.status === 'DELIVERED'
-      ).map(j => j.id));
+      const assignedJobIds = new Set(todaysAssignments.map(a => a.jobId));
       
       const unscheduled = visibleJobs.filter(job => 
         !assignedJobIds.has(job.id) && 
@@ -229,7 +226,7 @@ export default function SchedulingBoard() {
     const assignedJobIds = new Set(assignments.map(a => a.jobId));
     return jobs.filter(job => 
       !assignedJobIds.has(job.id) && 
-      (job.status === 'APPROVED' || job.status === 'PENDING_APPROVAL') &&
+      (job.status === 'APPROVED' || job.status === 'PENDING_APPROVAL' || job.status === 'SCHEDULED') &&
       job.requestedDate === selectedDate
     );
   };
