@@ -51,28 +51,22 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Real-time fetch for the specific job
+  // Fetch the specific job
   const { data: currentJob } = useQuery({
     queryKey: ['job', job?.id],
     queryFn: async () => {
       if (!job?.id) return null;
-      // Fetch all jobs to find the specific one. This is a simplification;
-      // ideally, there would be a base44.entities.Job.get(job.id) method.
       const jobs = await base44.entities.Job.list();
       return jobs.find(j => j.id === job.id) || job;
     },
     enabled: !!job?.id && open,
-    refetchInterval: 5000, // Real-time updates every 5 seconds
-    staleTime: 0,
-    initialData: job, // Use the prop 'job' as initial data to prevent flash of empty content
+    initialData: job,
   });
 
   const { data: assignments = [] } = useQuery({
-    queryKey: ['assignments', 'realtime'], // Adding 'realtime' to distinguish from other possible assignment queries
+    queryKey: ['assignments'],
     queryFn: () => base44.entities.Assignment.list(),
     enabled: open,
-    refetchInterval: 5000,
-    staleTime: 0,
   });
 
   const { data: customers = [] } = useQuery({
