@@ -292,32 +292,48 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         const directUploadUrls = [];
         const directUploadErrors = [];
         
+        // Try uploading one photo at a time with retry logic
         for (let i = 0; i < photos.length; i++) {
-          try {
-            setProcessingIndex(i);
-            const photo = photos[i];
-            console.log(`Attempting direct upload of photo ${i + 1}:`, photo.name, photo.type, photo.size);
-            
-            // Validate photo before upload
-            if (!photo || !photo.type || !photo.type.startsWith('image/')) {
-              throw new Error('Invalid image file');
+          let uploadSuccess = false;
+          let retryCount = 0;
+          const maxRetries = 2;
+          
+          while (!uploadSuccess && retryCount <= maxRetries) {
+            try {
+              setProcessingIndex(i);
+              const photo = photos[i];
+              
+              // Validate photo before upload
+              if (!photo || !photo.type || !photo.type.startsWith('image/')) {
+                throw new Error('Invalid image file');
+              }
+              
+              console.log(`Attempt ${retryCount + 1} - Uploading photo ${i + 1}:`, photo.name, photo.type, (photo.size / 1024).toFixed(0) + 'KB');
+              
+              const result = await base44.integrations.Core.UploadFile({ file: photo });
+              
+              if (!result || !result.file_url) {
+                throw new Error('Upload returned no URL');
+              }
+              
+              directUploadUrls.push(result.file_url);
+              console.log(`Successfully uploaded photo ${i + 1}:`, result.file_url);
+              uploadSuccess = true;
+              
+              const progress = 50 + ((i + 1) / photos.length) * 50;
+              setUploadProgress(Math.round(progress));
+            } catch (directErr) {
+              retryCount++;
+              const errorMsg = directErr?.message || String(directErr);
+              console.error(`Direct upload attempt ${retryCount} failed for photo ${i + 1}:`, errorMsg);
+              
+              if (retryCount > maxRetries) {
+                directUploadErrors.push(`Photo ${i + 1} (${photos[i]?.name || 'N/A'}): ${errorMsg}`);
+              } else {
+                // Wait a bit before retrying
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
             }
-            
-            const result = await base44.integrations.Core.UploadFile({ file: photo });
-            
-            if (!result || !result.file_url) {
-              throw new Error('Upload returned no URL');
-            }
-            
-            directUploadUrls.push(result.file_url);
-            console.log(`Successfully uploaded photo ${i + 1}:`, result.file_url);
-            
-            const progress = 50 + ((i + 1) / photos.length) * 50;
-            setUploadProgress(Math.round(progress));
-          } catch (directErr) {
-            const errorMsg = directErr?.message || String(directErr);
-            console.error(`Direct upload failed for photo ${i + 1}:`, errorMsg);
-            directUploadErrors.push(`Photo ${i + 1}: ${errorMsg}`);
           }
         }
         setProcessingIndex(-1);
@@ -325,7 +341,7 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         if (directUploadUrls.length === 0) {
           console.error('All direct uploads failed. Errors:', directUploadErrors);
           setErrors(directUploadErrors);
-          throw new Error(`Unable to upload photos. This may be due to file size, internet connection, or file format. Please try: 1) Taking fewer photos, 2) Using different photos, or 3) Checking your connection.`);
+          throw new Error(`Unable to upload any photos. Please check your internet connection and try again with fewer or smaller photos. If the issue persists, try taking new photos.`);
         }
         
         // Allow partial success - if at least 50% of photos uploaded, consider it a success
