@@ -628,15 +628,142 @@ export default function DailyJobBoard() {
                             </>
                             )}
                             </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        )}
+                            </CardContent>
+                            </Card>
+                            );
+                            })}
+                            </div>
+                            </div>
+                            ) : viewMode === 'weekly' ? (
+                            <div className="px-4 py-4 pb-24">
+                            <div className="space-y-4">
+                            {getWeekDays().map((day) => {
+                            const dayJobs = getJobsForDate(day);
+                            const isToday = isSameDay(day, new Date());
 
-        <JobDetailsDialog
+                            return (
+                            <Card key={format(day, 'yyyy-MM-dd')} className={isToday ? 'border-blue-500 border-2' : ''}>
+                            <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                            <Calendar className="h-5 w-5 text-indigo-600" />
+                            <span>{format(day, 'EEEE, MMM d')}</span>
+                            {isToday && <Badge variant="default" className="ml-2">Today</Badge>}
+                            </span>
+                            <Badge variant="secondary" className="bg-white">
+                            {dayJobs.length} {dayJobs.length === 1 ? 'job' : 'jobs'}
+                            </Badge>
+                            </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                            <div className="space-y-3">
+                            {dayJobs.length === 0 ? (
+                            <p className="text-sm text-gray-500 text-center py-4">No deliveries scheduled</p>
+                            ) : (
+                            dayJobs.map((job) => {
+                            const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
+                            const cardStyles = getJobCardInlineStyles(deliveryType, job);
+                            const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
+
+                            return (
+                             <div
+                               key={job.id}
+                               onClick={() => {
+                                 setSelectedJob(job);
+                                 setJobDialogOpen(true);
+                               }}
+                               className="p-3 rounded-lg border-2 cursor-pointer transition-all"
+                               style={cardStyles}
+                             >
+                               <div className="flex justify-between items-start gap-2">
+                                 <div className="flex-1">
+                                   {deliveryType?.code && (
+                                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold mb-1 inline-block" style={badgeStyles}>
+                                       {deliveryType.code}
+                                     </span>
+                                   )}
+                                   <p className="font-semibold text-sm">{job.customerName}</p>
+                                   <p className="text-xs text-gray-600">{job.deliveryLocation}</p>
+                                   {job.deliveryWindow && (
+                                     <p className="text-xs text-gray-500 mt-1">{job.deliveryWindow}</p>
+                                   )}
+                                 </div>
+                                 {job.sqm && (
+                                   <Badge variant="outline" className="text-xs">{job.sqm}m²</Badge>
+                                 )}
+                               </div>
+                             </div>
+                            );
+                            })
+                            )}
+                            </div>
+                            </CardContent>
+                            </Card>
+                            );
+                            })}
+                            </div>
+                            </div>
+                            ) : (
+                            <div className="px-4 py-4 pb-24">
+                            <div className="grid grid-cols-7 gap-2 mb-2">
+                            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                            <div key={day} className="text-center text-xs font-semibold text-gray-600 py-2">
+                            {day}
+                            </div>
+                            ))}
+                            </div>
+
+                            <div className="grid grid-cols-7 gap-2">
+                            {(() => {
+                            const monthStart = startOfMonth(new Date(selectedDate));
+                            const monthEnd = endOfMonth(new Date(selectedDate));
+                            const startDay = startOfWeek(monthStart, { weekStartsOn: 1 });
+                            const endDay = endOfWeek(monthEnd, { weekStartsOn: 1 });
+                            const allDays = eachDayOfInterval({ start: startDay, end: endDay });
+
+                            return allDays.map((day) => {
+                            const isCurrentMonth = day.getMonth() === new Date(selectedDate).getMonth();
+                            const isToday = isSameDay(day, new Date());
+                            const stats = getStatsForDate(day);
+                            const hasJobs = stats.count > 0;
+
+                            return (
+                            <div
+                            key={format(day, 'yyyy-MM-dd')}
+                            className={`
+                            group relative aspect-square border rounded-lg p-2 transition-all
+                            ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white hover:bg-gray-50'}
+                            ${isToday ? 'border-blue-500 border-2 bg-blue-50' : 'border-gray-200'}
+                            ${hasJobs ? 'cursor-pointer hover:shadow-lg' : ''}
+                            `}
+                            onClick={() => {
+                            if (hasJobs) {
+                            setSelectedDate(format(day, 'yyyy-MM-dd'));
+                            setViewMode('daily');
+                            }
+                            }}
+                            >
+                            <div className="text-xs font-medium">{format(day, 'd')}</div>
+                            {hasJobs && (
+                            <>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-1 opacity-0 group-hover:opacity-100 bg-white/95 rounded-lg transition-opacity z-10">
+                            <div className="text-xs font-semibold text-gray-900">{stats.count} jobs</div>
+                            <div className="text-xs text-gray-600">{stats.totalM2.toFixed(0)}m²</div>
+                            </div>
+                            <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                            </div>
+                            </>
+                            )}
+                            </div>
+                            );
+                            });
+                            })()}
+                            </div>
+                            </div>
+                            )}
+
+                            <JobDetailsDialog
           job={selectedJob}
           open={isJobDialogOpen}
           onOpenChange={setJobDialogOpen}
