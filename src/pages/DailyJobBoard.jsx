@@ -571,12 +571,25 @@ export default function DailyJobBoard() {
                                         </div>
                                       </div>
                                       <div className="space-y-1">
-                                        <p className="font-semibold text-sm text-gray-900">
-                                          {job.customerName}
-                                        </p>
-                                        <p className="text-sm text-gray-700">
-                                          {job.deliveryLocation}
-                                        </p>
+                                        {currentUser?.appRole === 'customer' ? (
+                                          <>
+                                            <p className="font-semibold text-sm text-gray-900">
+                                              {job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}
+                                            </p>
+                                            <p className="text-xs text-gray-600">
+                                              {job.deliveryLocation}
+                                            </p>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <p className="font-semibold text-sm text-gray-900">
+                                              {job.customerName}
+                                            </p>
+                                            <p className="text-sm text-gray-700">
+                                              {job.deliveryLocation}
+                                            </p>
+                                          </>
+                                        )}
                                         <p className="text-xs text-gray-600">
                                           {job.deliveryTypeName}
                                         </p>
@@ -695,8 +708,17 @@ export default function DailyJobBoard() {
                                       {deliveryType.code}
                                     </span>
                                   )}
-                                  <p className="font-semibold text-sm">{job.customerName}</p>
-                                  <p className="text-xs text-gray-600">{job.deliveryLocation}</p>
+                                  {currentUser?.appRole === 'customer' ? (
+                                    <>
+                                      <p className="font-semibold text-sm">{job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}</p>
+                                      <p className="text-xs text-gray-600">{job.deliveryLocation}</p>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <p className="font-semibold text-sm">{job.customerName}</p>
+                                      <p className="text-xs text-gray-600">{job.deliveryLocation}</p>
+                                    </>
+                                  )}
                                   {job.deliveryWindow && (
                                     <p className="text-xs text-gray-500 mt-1">{job.deliveryWindow}</p>
                                   )}
@@ -1024,12 +1046,25 @@ export default function DailyJobBoard() {
                                             </span>
                                           </div>
                                         )}
-                                        <h4 className="font-semibold text-sm mb-0.5 text-gray-900">
-                                          {job.customerName}
-                                        </h4>
-                                        <p className="text-xs truncate text-gray-700">
-                                          {job.deliveryLocation}
-                                        </p>
+                                        {currentUser?.appRole === 'customer' ? (
+                                          <>
+                                            <h4 className="font-semibold text-sm mb-0.5 text-gray-900">
+                                              {job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}
+                                            </h4>
+                                            <p className="text-xs truncate text-gray-600">
+                                              {job.deliveryLocation}
+                                            </p>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <h4 className="font-semibold text-sm mb-0.5 text-gray-900">
+                                              {job.customerName}
+                                            </h4>
+                                            <p className="text-xs truncate text-gray-700">
+                                              {job.deliveryLocation}
+                                            </p>
+                                          </>
+                                        )}
                                         <p className="text-xs mt-0.5 text-gray-600">
                                           {job.deliveryTypeName}
                                         </p>
@@ -1148,7 +1183,14 @@ export default function DailyJobBoard() {
                               className="p-2 rounded border cursor-pointer hover:shadow-md transition-all text-xs"
                               style={cardStyles}
                             >
-                              <p className="font-semibold truncate">{job.customerName}</p>
+                              {currentUser?.appRole === 'customer' ? (
+                                <>
+                                  <p className="font-semibold truncate">{job.deliveryLocation.split(',').slice(-2).join(',').trim() || job.deliveryLocation}</p>
+                                  <p className="text-xs text-gray-500 truncate">{job.deliveryLocation}</p>
+                                </>
+                              ) : (
+                                <p className="font-semibold truncate">{job.customerName}</p>
+                              )}
                               {job.sqm && (
                                 <p className="text-gray-600">{job.sqm}m²</p>
                               )}
