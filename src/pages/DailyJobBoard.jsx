@@ -62,25 +62,20 @@ export default function DailyJobBoard() {
 
   // Filter out cancelled jobs for all users - include RETURNED status
   const { data: jobs = [], isLoading: jobsLoading, isFetching: jobsFetching } = useQuery({
-    queryKey: ['jobs', 'realtime'],
+    queryKey: ['jobs'],
     queryFn: () => base44.entities.Job.filter({ 
       status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED', 'RETURNED', 'IN_TRANSIT'] }
     }),
-    staleTime: 0,
-    refetchInterval: 5000, // Poll every 5 seconds for real-time updates
   });
 
   const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
-    queryKey: ['assignments', 'realtime'],
+    queryKey: ['assignments'],
     queryFn: () => base44.entities.Assignment.list(),
-    staleTime: 0,
-    refetchInterval: 5000, // Poll every 5 seconds
   });
 
   const { data: placeholders = [], isLoading: placeholdersLoading } = useQuery({
-    queryKey: ['placeholders', 'realtime', selectedDate], // Add selectedDate as a dependency for placeholders
-    queryFn: () => base44.entities.Placeholder.list(), // Will filter by date in useMemo
-    staleTime: 0,
+    queryKey: ['placeholders', selectedDate],
+    queryFn: () => base44.entities.Placeholder.list(),
   });
 
   const { data: deliveryTypes = [] } = useQuery({
@@ -522,13 +517,6 @@ export default function DailyJobBoard() {
                 Today
               </Button>
             </>
-          )}
-
-          {jobsFetching && (
-            <div className="mt-2 flex items-center justify-center gap-2 text-xs text-blue-600">
-              <RefreshCw className="h-3 w-3 animate-spin" />
-              <span>Live updates active</span>
-            </div>
           )}
         </div>
 
@@ -1158,12 +1146,6 @@ export default function DailyJobBoard() {
             </div>
             
             <DeliveryTypeLegend />
-            {jobsFetching && (
-              <div className="flex items-center gap-2 text-sm text-blue-600">
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                <span>Live</span>
-              </div>
-            )}
             <Button
               size="sm"
               variant="ghost"

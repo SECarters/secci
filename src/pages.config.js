@@ -1,7 +1,6 @@
 import AccessPending from './pages/AccessPending';
 import AdminCustomers from './pages/AdminCustomers';
 import AdminDeliveryTypes from './pages/AdminDeliveryTypes';
-import AdminJobs from './pages/AdminJobs';
 import AdminPickupLocations from './pages/AdminPickupLocations';
 import AdminUsers from './pages/AdminUsers';
 import CustomerRequestDelivery from './pages/CustomerRequestDelivery';
@@ -16,6 +15,7 @@ import SheetSpecs from './pages/SheetSpecs';
 import TestEmails from './pages/TestEmails';
 import WeatherToday from './pages/WeatherToday';
 import DailyJobBoard from './pages/DailyJobBoard';
+import AdminJobs from './pages/AdminJobs';
 import __Layout from './Layout.jsx';
 
 
@@ -23,7 +23,6 @@ export const PAGES = {
     "AccessPending": AccessPending,
     "AdminCustomers": AdminCustomers,
     "AdminDeliveryTypes": AdminDeliveryTypes,
-    "AdminJobs": AdminJobs,
     "AdminPickupLocations": AdminPickupLocations,
     "AdminUsers": AdminUsers,
     "CustomerRequestDelivery": CustomerRequestDelivery,
@@ -38,6 +37,7 @@ export const PAGES = {
     "TestEmails": TestEmails,
     "WeatherToday": WeatherToday,
     "DailyJobBoard": DailyJobBoard,
+    "AdminJobs": AdminJobs,
 }
 
 export const pagesConfig = {
