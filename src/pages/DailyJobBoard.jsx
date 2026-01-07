@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar, User, Truck, Clock, AlertTriangle, Plus, CheckCircle2, Package, RefreshCw, ArrowLeft, LayoutGrid, CalendarDays, CalendarRange, List } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, User, Truck, Clock, AlertTriangle, Plus, CheckCircle2, Package, RefreshCw, ArrowLeft, LayoutGrid, CalendarDays, CalendarRange, List, Search, Filter, X } from 'lucide-react';
 import { format, addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns';
 import { createPageUrl } from '@/utils';
 import CreateJobForm from '../components/scheduling/CreateJobForm';
@@ -15,6 +15,8 @@ import DeliveryTypeLegend from '../components/scheduling/DeliveryTypeLegend';
 import EditPlaceholderForm from '../components/scheduling/EditPlaceholderForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const TRUCKS = [
   { id: 'ACCO1', name: 'ACCO1' },
@@ -51,6 +53,9 @@ export default function DailyJobBoard() {
   const [selectedPlaceholder, setSelectedPlaceholder] = useState(null);
   const [isPlaceholderDialogOpen, setPlaceholderDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState('daily'); // 'daily', 'weekly', 'monthly', 'list'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterBy, setFilterBy] = useState('all');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -120,6 +125,84 @@ export default function DailyJobBoard() {
     init();
   }, []);
 
+  // Apply search and filter to jobs
+  const searchFilteredJobs = React.useMemo(() => {
+    let result = [...jobs];
+
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(job => {
+        const assignment = assignments.find(a => a.jobId === job.id);
+        const searchableFields = [
+          job.customerName,
+          job.deliveryLocation,
+          job.deliverySuburb,
+          job.deliveryStreetNumber,
+          job.deliveryStreetName,
+          job.deliveryTypeName,
+          job.pickupLocation,
+          job.siteContactName,
+          job.siteContactPhone,
+          job.poSalesDocketNumber,
+          job.deliveryNotes,
+          job.status,
+          assignment?.truckId || '',
+          assignment?.timeSlotId || ''
+        ].filter(Boolean).join(' ').toLowerCase();
+        
+        return searchableFields.includes(query);
+      });
+    }
+
+    // Apply sorting
+    if (filterBy !== 'all') {
+      result = result.sort((a, b) => {
+        let compareA, compareB;
+
+        switch (filterBy) {
+          case 'deliveryLocation':
+            compareA = a.deliverySuburb || a.deliveryLocation || '';
+            compareB = b.deliverySuburb || b.deliveryLocation || '';
+            break;
+          case 'requestedDate':
+            compareA = new Date(a.requestedDate).getTime();
+            compareB = new Date(b.requestedDate).getTime();
+            break;
+          case 'scheduledDate':
+            const assignmentA = assignments.find(asn => asn.jobId === a.id);
+            const assignmentB = assignments.find(asn => asn.jobId === b.id);
+            compareA = assignmentA ? new Date(assignmentA.date).getTime() : 0;
+            compareB = assignmentB ? new Date(assignmentB.date).getTime() : 0;
+            break;
+          case 'status':
+            compareA = a.status || '';
+            compareB = b.status || '';
+            break;
+          default:
+            compareA = a.created_date;
+            compareB = b.created_date;
+        }
+
+        if (typeof compareA === 'string') {
+          if (sortOrder === 'asc') {
+            return compareA.localeCompare(compareB);
+          } else {
+            return compareB.localeCompare(compareA);
+          }
+        } else {
+          if (sortOrder === 'asc') {
+            return compareA - compareB;
+          } else {
+            return compareB - compareA;
+          }
+        }
+      });
+    }
+
+    return result;
+  }, [jobs, assignments, searchQuery, filterBy, sortOrder]);
+
   // Process data for display using React.useMemo
   const { jobsByTruck, filteredJobs, dateFilteredPlaceholders } = React.useMemo(() => {
     if (!currentUser || loading) {
@@ -143,6 +226,9 @@ export default function DailyJobBoard() {
 
       visibleJobs = visibleJobs.filter((job) => allowedCustomerIds.includes(job.customerId));
     }
+
+    // Use search-filtered jobs instead of raw jobs
+    visibleJobs = searchFilteredJobs.filter(j => visibleJobs.some(vj => vj.id === j.id));
 
     const dateFilteredAndVisibleJobs = visibleJobs.filter((job) => job.requestedDate === selectedDate);
 
@@ -189,7 +275,7 @@ export default function DailyJobBoard() {
       filteredJobs: dateFilteredAndVisibleJobs,
       dateFilteredPlaceholders
     };
-  }, [jobs, assignments, placeholders, deliveryTypes, customers, pickupLocations, selectedDate, currentUser, loading]);
+  }, [searchFilteredJobs, assignments, placeholders, deliveryTypes, customers, pickupLocations, selectedDate, currentUser, loading]);
 
   const goToPrevious = () => {
     if (viewMode === 'list') return; // No navigation in list view
@@ -268,6 +354,14 @@ export default function DailyJobBoard() {
       description: "Getting the latest job updates.",
     });
   };
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setFilterBy('all');
+    setSortOrder('desc');
+  };
+
+  const hasActiveFilters = searchQuery.trim() || filterBy !== 'all';
 
   const getDateRangeLabel = () => {
     if (viewMode === 'list') return 'All Jobs';
@@ -930,6 +1024,90 @@ export default function DailyJobBoard() {
   return (
     <>
       <div className="space-y-6">
+        {/* Search and Filter Bar - Customer Only */}
+        {currentUser?.appRole === 'customer' && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Search Bar */}
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search jobs by location, contact, docket, or notes..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                {/* Filter By Dropdown */}
+                <div className="flex gap-2">
+                  <div className="w-48">
+                    <Select value={filterBy} onValueChange={setFilterBy}>
+                      <SelectTrigger>
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-4 w-4" />
+                          <SelectValue placeholder="Filter by..." />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All (No Filter)</SelectItem>
+                        <SelectItem value="deliveryLocation">Delivery Location</SelectItem>
+                        <SelectItem value="requestedDate">Requested Date</SelectItem>
+                        <SelectItem value="scheduledDate">Scheduled Date</SelectItem>
+                        <SelectItem value="status">Status</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Sort Order Toggle */}
+                  {filterBy !== 'all' && (
+                    <Select value={sortOrder} onValueChange={setSortOrder}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="asc">A → Z / Old → New</SelectItem>
+                        <SelectItem value="desc">Z → A / New → Old</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+
+                  {/* Clear Filters Button */}
+                  {hasActiveFilters && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleClearFilters}
+                      title="Clear all filters"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Active Filter Indicator */}
+              {hasActiveFilters && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+                  <span className="font-medium">Active filters:</span>
+                  {searchQuery && (
+                    <Badge variant="outline" className="gap-1">
+                      Search: "{searchQuery}"
+                    </Badge>
+                  )}
+                  {filterBy !== 'all' && (
+                    <Badge variant="outline" className="gap-1">
+                      Sort by: {filterBy.replace(/([A-Z])/g, ' $1').trim()}
+                    </Badge>
+                  )}
+                  <span className="text-gray-500">({searchFilteredJobs.length} {searchFilteredJobs.length === 1 ? 'result' : 'results'})</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
