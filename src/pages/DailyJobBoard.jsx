@@ -297,6 +297,7 @@ export default function DailyJobBoard() {
 
   const getJobsForDate = (date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
+    // For weekly and monthly views, fetch from all jobs, not just filtered by selected date
     let visibleJobs = [...jobs];
     
     if (currentUser.role !== 'admin' && currentUser.appRole === 'customer' &&
@@ -309,10 +310,7 @@ export default function DailyJobBoard() {
       visibleJobs = visibleJobs.filter((job) => allowedCustomerIds.includes(job.customerId));
     }
     
-    return visibleJobs.filter(job => job.requestedDate === dateStr).map(job => ({
-      ...job,
-      pickupLocation: pickupLocations.find(loc => loc.id === job.pickupLocationId)
-    }));
+    return visibleJobs.filter(job => job.requestedDate === dateStr);
   };
 
   const getStatsForDate = (date) => {
@@ -650,211 +648,75 @@ export default function DailyJobBoard() {
                                     </div>
                                     </div>
                                     ) : viewMode === 'weekly' ? (
-                                      <div className="px-4 py-4 pb-24">
-                                        <div className="space-y-4">
-                                          {getWeekDays().map((day) => {
-                                            const dayStr = format(day, 'yyyy-MM-dd');
-                                            const dayJobs = getJobsForDate(day);
-                                            const dayAssignments = assignments.filter(a => a.date === dayStr);
-                                            const dayPlaceholders = dateFilteredPlaceholders.filter(p => p.date === dayStr);
-                                            const isToday = isSameDay(day, new Date());
+                            <div className="px-4 py-4 pb-24">
+                            <div className="space-y-4">
+                            {getWeekDays().map((day) => {
+                            const dayJobs = getJobsForDate(day);
+                            const isToday = isSameDay(day, new Date());
 
-                                            return (
-                                              <Card key={dayStr} className={isToday ? 'border-blue-500 border-2' : ''}>
-                                                <CardHeader className="pb-3">
-                                                  <CardTitle className="text-base flex items-center justify-between">
-                                                    <span className="flex items-center gap-2">
-                                                      <Calendar className="h-5 w-5 text-indigo-600" />
-                                                      <span>{format(day, 'EEEE, MMM d')}</span>
-                                                      {isToday && <Badge variant="default" className="ml-2">Today</Badge>}
-                                                    </span>
-                                                    <Badge variant="secondary" className="bg-white">
-                                                      {dayJobs.length} {dayJobs.length === 1 ? 'job' : 'jobs'}
-                                                    </Badge>
-                                                  </CardTitle>
-                                                </CardHeader>
-                                                <CardContent>
-                                                  <div className="space-y-3">
-                                                    {dayJobs.length === 0 && dayPlaceholders.length === 0 ? (
-                                                      <p className="text-sm text-gray-500 text-center py-4">No deliveries scheduled</p>
-                                                    ) : (
-                                                      TIME_SLOTS.map((slot) => {
-                                                        const slotAssignments = dayAssignments.filter(a => a.timeSlotId === slot.id);
-                                                        const slotJobs = slotAssignments.map(a => {
-                                                          const job = dayJobs.find(j => j.id === a.jobId);
-                                                          return job ? { job, assignment: a, truckId: a.truckId, slotPosition: a.slotPosition || 1 } : null;
-                                                        }).filter(Boolean);
-                                                        const slotPlaceholders = dayPlaceholders.filter(p => p.timeSlotId === slot.id);
+                            return (
+                            <Card key={format(day, 'yyyy-MM-dd')} className={isToday ? 'border-blue-500 border-2' : ''}>
+                            <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                            <Calendar className="h-5 w-5 text-indigo-600" />
+                            <span>{format(day, 'EEEE, MMM d')}</span>
+                            {isToday && <Badge variant="default" className="ml-2">Today</Badge>}
+                            </span>
+                            <Badge variant="secondary" className="bg-white">
+                            {dayJobs.length} {dayJobs.length === 1 ? 'job' : 'jobs'}
+                            </Badge>
+                            </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                            <div className="space-y-3">
+                            {dayJobs.length === 0 ? (
+                            <p className="text-sm text-gray-500 text-center py-4">No deliveries scheduled</p>
+                            ) : (
+                            dayJobs.map((job) => {
+                            const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
+                            const cardStyles = getJobCardInlineStyles(deliveryType, job);
+                            const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
 
-                                                        if (slotJobs.length === 0 && slotPlaceholders.length === 0) return null;
-
-                                                        return (
-                                                          <div key={slot.id} className={`${slot.color} border-2 rounded-lg p-3`}>
-                                                            <div className="flex items-center gap-2 mb-3">
-                                                              <Clock className="h-4 w-4 text-indigo-600" />
-                                                              <span className="text-sm font-semibold">{slot.label}</span>
-                                                              <Badge variant="secondary" className="bg-white text-xs ml-auto">
-                                                                {slotJobs.length + slotPlaceholders.length}
-                                                              </Badge>
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                              {(() => {
-                                                                const truckOrder = ['ACCO1', 'ACCO2', 'FUSO', 'ISUZU', 'UD'];
-                                                                const jobsWithPos = slotJobs.map(item => ({
-                                                                  item,
-                                                                  truckId: item.truckId,
-                                                                  slotPosition: item.slotPosition,
-                                                                  isPlaceholder: false
-                                                                }));
-                                                                const placeholdersWithPos = slotPlaceholders.map(p => ({
-                                                                  item: p,
-                                                                  truckId: p.truckId,
-                                                                  slotPosition: p.slotPosition || 1,
-                                                                  isPlaceholder: true
-                                                                }));
-
-                                                                return [...jobsWithPos, ...placeholdersWithPos]
-                                                                  .sort((a, b) => {
-                                                                    const truckA = truckOrder.indexOf(a.truckId);
-                                                                    const truckB = truckOrder.indexOf(b.truckId);
-                                                                    if (truckA !== truckB) return truckA - truckB;
-                                                                    return a.slotPosition - b.slotPosition;
-                                                                  })
-                                                                  .map(({ item, isPlaceholder }) => {
-                                                                    if (isPlaceholder) {
-                                                                      const placeholder = item;
-                                                                      const colorScheme = COLOR_OPTIONS[placeholder.color] || COLOR_OPTIONS.gray;
-                                                                      const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
-                                                                      return (
-                                                                        <div
-                                                                          key={placeholder.id}
-                                                                          onClick={() => handlePlaceholderClick(placeholder)}
-                                                                          className={`p-2 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border} ${canEdit ? 'cursor-pointer active:opacity-80 transition-all' : ''}`}
-                                                                        >
-                                                                          <div className="flex items-center justify-between gap-2">
-                                                                            <div className="flex items-center gap-2">
-                                                                              <Package className={`h-4 w-4 ${colorScheme.text}`} />
-                                                                              <span className={`font-medium text-xs ${colorScheme.text}`}>
-                                                                                {placeholder.label}
-                                                                              </span>
-                                                                            </div>
-                                                                            {placeholder.truckId && (
-                                                                              <Badge variant="outline" className="text-xs bg-white/90 text-gray-700 border-gray-400">
-                                                                                <Truck className="h-3 w-3 mr-1" />
-                                                                                {placeholder.truckId}
-                                                                              </Badge>
-                                                                            )}
-                                                                          </div>
-                                                                        </div>
-                                                                      );
-                                                                    }
-
-                                                                    const job = item.job;
-                                                                    const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
-                                                                    const pickupShortname = pickupLocations.find(loc => loc.id === job.pickupLocationId)?.shortname;
-                                                                    const cardStyles = getJobCardInlineStyles(deliveryType, job);
-                                                                    const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
-
-                                                                    return (
-                                                                      <div
-                                                                        key={job.id}
-                                                                        onClick={() => {
-                                                                          setSelectedJob(job);
-                                                                          setJobDialogOpen(true);
-                                                                        }}
-                                                                        className="p-2 rounded-lg border-2 cursor-pointer active:opacity-80 transition-all"
-                                                                        style={cardStyles}
-                                                                      >
-                                                                        <div className="flex items-start justify-between gap-2 mb-1">
-                                                                          <div className="flex items-center gap-2">
-                                                                            <Truck className="h-3 w-3 flex-shrink-0 text-gray-700" />
-                                                                            <Badge variant="outline" className="text-xs bg-white/90 text-gray-900">
-                                                                              {item.assignment.truckId}
-                                                                            </Badge>
-                                                                          </div>
-                                                                          <div className="flex flex-col gap-1 items-end">
-                                                                            {deliveryType?.code && (
-                                                                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5 shadow-sm" style={badgeStyles}>
-                                                                                {getJobCardStyles(deliveryType, job).icon && (
-                                                                                  <span className="text-sm">{getJobCardStyles(deliveryType, job).icon}</span>
-                                                                                )}
-                                                                                {deliveryType.code}
-                                                                              </span>
-                                                                            )}
-                                                                            {pickupShortname && (
-                                                                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700">
-                                                                                {pickupShortname}
-                                                                              </span>
-                                                                            )}
-                                                                            {job.sqm && (
-                                                                              <Badge variant="outline" className="text-xs bg-white/90 text-gray-900">
-                                                                                {job.sqm.toLocaleString()}m²
-                                                                              </Badge>
-                                                                            )}
-                                                                          </div>
-                                                                        </div>
-                                                                        <div className="space-y-0.5">
-                                                                          <p className="font-semibold text-xs text-gray-900">{job.customerName}</p>
-                                                                          <p className="text-xs text-gray-700">{job.deliveryLocation}</p>
-                                                                          {job.siteContactName && (
-                                                                            <p className="text-xs flex items-center gap-1 text-gray-600">
-                                                                              <User className="h-3 w-3" />
-                                                                              {job.siteContactName}
-                                                                            </p>
-                                                                          )}
-                                                                          {job.status === 'IN_TRANSIT' && (
-                                                                            <Badge className="bg-blue-600 text-white text-xs mt-1 animate-pulse">
-                                                                              <Truck className="h-3 w-3 mr-1" />IN TRANSIT
-                                                                            </Badge>
-                                                                          )}
-                                                                          {job.driverStatus === 'EN_ROUTE' && (
-                                                                            <Badge className="bg-indigo-600 text-white text-xs mt-1">
-                                                                              <Truck className="h-3 w-3 mr-1" />EN ROUTE
-                                                                            </Badge>
-                                                                          )}
-                                                                          {job.driverStatus === 'ARRIVED' && (
-                                                                            <Badge className="bg-purple-600 text-white text-xs mt-1">
-                                                                              <CheckCircle2 className="h-3 w-3 mr-1" />ARRIVED
-                                                                            </Badge>
-                                                                          )}
-                                                                          {job.driverStatus === 'UNLOADING' && (
-                                                                            <Badge className="bg-orange-600 text-white text-xs mt-1 animate-pulse">
-                                                                              <Package className="h-3 w-3 mr-1" />UNLOADING
-                                                                            </Badge>
-                                                                          )}
-                                                                          {job.driverStatus === 'PROBLEM' && (
-                                                                            <Badge className="bg-red-600 text-white text-xs mt-1">
-                                                                              <AlertTriangle className="h-3 w-3 mr-1" />PROBLEM
-                                                                            </Badge>
-                                                                          )}
-                                                                          {job.status === 'DELIVERED' && (
-                                                                            <Badge className="bg-green-600 text-white text-xs mt-1">
-                                                                              <CheckCircle2 className="h-3 w-3 mr-1" />DELIVERED
-                                                                            </Badge>
-                                                                          )}
-                                                                          {(job.status === 'RETURNED' || job.isReturned) && (
-                                                                            <Badge className="bg-black text-white text-xs mt-1">
-                                                                              <ArrowLeft className="h-3 w-3 mr-1" />RETURNED
-                                                                            </Badge>
-                                                                          )}
-                                                                        </div>
-                                                                      </div>
-                                                                    );
-                                                                  });
-                                                              })()}
-                                                            </div>
-                                                          </div>
-                                                        );
-                                                      })
-                                                    )}
-                                                  </div>
-                                                </CardContent>
-                                              </Card>
-                                            );
-                                          })}
-                                        </div>
-                                      </div>
-                                    ) : (
+                            return (
+                            <div
+                              key={job.id}
+                              onClick={() => {
+                                setSelectedJob(job);
+                                setJobDialogOpen(true);
+                              }}
+                              className="p-3 rounded-lg border-2 cursor-pointer transition-all"
+                              style={cardStyles}
+                            >
+                              <div className="flex justify-between items-start gap-2">
+                                <div className="flex-1">
+                                  {deliveryType?.code && (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold mb-1 inline-block" style={badgeStyles}>
+                                      {deliveryType.code}
+                                    </span>
+                                  )}
+                                  <p className="font-semibold text-sm">{job.customerName}</p>
+                                  <p className="text-xs text-gray-600">{job.deliveryLocation}</p>
+                                  {job.deliveryWindow && (
+                                    <p className="text-xs text-gray-500 mt-1">{job.deliveryWindow}</p>
+                                  )}
+                                </div>
+                                {job.sqm && (
+                                  <Badge variant="outline" className="text-xs">{job.sqm}m²</Badge>
+                                )}
+                              </div>
+                            </div>
+                            );
+                            })
+                            )}
+                            </div>
+                            </CardContent>
+                            </Card>
+                            );
+                            })}
+                            </div>
+                            </div>
+                            ) : (
                             <div className="px-4 py-4 pb-24">
                             <div className="grid grid-cols-7 gap-2 mb-2">
                               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
