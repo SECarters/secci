@@ -297,7 +297,6 @@ export default function DailyJobBoard() {
 
   const getJobsForDate = (date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    // For weekly and monthly views, fetch from all jobs, not just filtered by selected date
     let visibleJobs = [...jobs];
     
     if (currentUser.role !== 'admin' && currentUser.appRole === 'customer' &&
@@ -310,7 +309,10 @@ export default function DailyJobBoard() {
       visibleJobs = visibleJobs.filter((job) => allowedCustomerIds.includes(job.customerId));
     }
     
-    return visibleJobs.filter(job => job.requestedDate === dateStr);
+    return visibleJobs.filter(job => job.requestedDate === dateStr).map(job => ({
+      ...job,
+      pickupLocation: pickupLocations.find(loc => loc.id === job.pickupLocationId)
+    }));
   };
 
   const getStatsForDate = (date) => {
