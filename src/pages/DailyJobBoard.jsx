@@ -439,6 +439,73 @@ export default function DailyJobBoard() {
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
+        ) : viewMode === 'list' ? (
+          <div className="px-4 py-4 pb-24">
+            <div className="bg-white rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Delivery Location</TableHead>
+                    <TableHead>Requested Date</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredJobs.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                        No jobs found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredJobs.map(job => {
+                      const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
+                      return (
+                        <TableRow 
+                          key={job.id}
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => {
+                            setSelectedJob(job);
+                            setJobDialogOpen(true);
+                          }}
+                        >
+                          <TableCell>
+                            <div className="flex flex-col gap-1">
+                              {deliveryType?.code && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 inline-block w-fit">
+                                  {deliveryType.code}
+                                </span>
+                              )}
+                              <div className="font-medium">
+                                {job.deliverySuburb || job.deliveryLocation}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {job.deliveryStreetNumber && job.deliveryStreetName 
+                                  ? `${job.deliveryStreetNumber} ${job.deliveryStreetName}${job.deliveryStreetType ? ' ' + job.deliveryStreetType : ''}`
+                                  : job.deliveryLocation}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{format(new Date(job.requestedDate), 'dd MMM yyyy')}</TableCell>
+                          <TableCell>
+                            <Badge className={
+                              job.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
+                              job.status === 'IN_TRANSIT' ? 'bg-blue-100 text-blue-800' :
+                              job.status === 'SCHEDULED' ? 'bg-indigo-100 text-indigo-800' :
+                              job.status === 'RETURNED' ? 'bg-black text-white' :
+                              'bg-gray-100 text-gray-800'
+                            }>
+                              {job.status.replace(/_/g, ' ')}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         ) : viewMode === 'daily' ? (
           <div className="px-4 py-4 pb-24">
             <div className="space-y-4">
@@ -949,6 +1016,86 @@ export default function DailyJobBoard() {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : viewMode === 'list' ? (
+          <div className="px-4 md:px-6 py-6">
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Delivery Location</TableHead>
+                      <TableHead>Requested Date</TableHead>
+                      <TableHead>Scheduled Date</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredJobs.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                          No jobs found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredJobs.map(job => {
+                        const assignment = assignments.find(a => a.jobId === job.id);
+                        const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
+                        return (
+                          <TableRow 
+                            key={job.id}
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => {
+                              setSelectedJob(job);
+                              setJobDialogOpen(true);
+                            }}
+                          >
+                            <TableCell>
+                              <div className="flex flex-col gap-1">
+                                {deliveryType?.code && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 inline-block w-fit">
+                                    {deliveryType.code}
+                                  </span>
+                                )}
+                                <div className="font-medium">
+                                  {job.deliverySuburb || job.deliveryLocation}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {job.deliveryStreetNumber && job.deliveryStreetName 
+                                    ? `${job.deliveryStreetNumber} ${job.deliveryStreetName}${job.deliveryStreetType ? ' ' + job.deliveryStreetType : ''}`
+                                    : job.deliveryLocation}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{format(new Date(job.requestedDate), 'dd MMM yyyy')}</TableCell>
+                            <TableCell>
+                              {assignment ? (
+                                <div className="text-sm font-medium text-gray-900">
+                                  {format(new Date(assignment.date), 'dd MMM yyyy')}
+                                </div>
+                              ) : (
+                                <span className="text-sm text-gray-400">Not scheduled</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={
+                                job.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
+                                job.status === 'IN_TRANSIT' ? 'bg-blue-100 text-blue-800' :
+                                job.status === 'SCHEDULED' ? 'bg-indigo-100 text-indigo-800' :
+                                job.status === 'RETURNED' ? 'bg-black text-white' :
+                                'bg-gray-100 text-gray-800'
+                              }>
+                                {job.status.replace(/_/g, ' ')}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </div>
         ) : viewMode === 'daily' ? (
           <div className="px-4 md:px-6 py-6">
