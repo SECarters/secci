@@ -79,7 +79,6 @@ const AdminNav = ({ collapsed, onNavigate }) => {
   const location = useLocation();
   
   const libraryPages = [
-    createPageUrl('AdminJobs'),
     createPageUrl('AdminCustomers'),
     createPageUrl('AdminUsers'),
     createPageUrl('AdminPickupLocations'),
@@ -128,7 +127,6 @@ const AdminNav = ({ collapsed, onNavigate }) => {
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-1 mt-1">
-            <SubNavLink to={createPageUrl('AdminJobs')} onClick={onNavigate}>All Jobs</SubNavLink>
             <SubNavLink to={createPageUrl('AdminCustomers')} onClick={onNavigate}>Customers</SubNavLink>
             <SubNavLink to={createPageUrl('AdminUsers')} onClick={onNavigate}>System Users</SubNavLink>
             <SubNavLink to={createPageUrl('AdminPickupLocations')} onClick={onNavigate}>Pickup Locations</SubNavLink>
@@ -138,7 +136,7 @@ const AdminNav = ({ collapsed, onNavigate }) => {
           </CollapsibleContent>
         </Collapsible>
       ) : (
-        <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
+        <NavLink to={createPageUrl('AdminCustomers')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
       )}
       
       <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
@@ -151,7 +149,6 @@ const DispatcherNav = ({ collapsed, onNavigate }) => {
   const location = useLocation();
   
   const libraryPages = [
-    createPageUrl('AdminJobs'),
     createPageUrl('AdminCustomers'),
     createPageUrl('AdminPickupLocations'),
     createPageUrl('AdminDeliveryTypes')
@@ -197,14 +194,13 @@ const DispatcherNav = ({ collapsed, onNavigate }) => {
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-1 mt-1">
-            <SubNavLink to={createPageUrl('AdminJobs')} onClick={onNavigate}>All Jobs</SubNavLink>
             <SubNavLink to={createPageUrl('AdminCustomers')} onClick={onNavigate}>Customers</SubNavLink>
             <SubNavLink to={createPageUrl('AdminPickupLocations')} onClick={onNavigate}>Pickup Locations</SubNavLink>
             <SubNavLink to={createPageUrl('AdminDeliveryTypes')} onClick={onNavigate}>Delivery Types</SubNavLink>
           </CollapsibleContent>
         </Collapsible>
       ) : (
-        <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
+        <NavLink to={createPageUrl('AdminCustomers')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
       )}
       
       <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
