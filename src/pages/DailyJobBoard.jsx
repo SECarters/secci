@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar, User, Truck, Clock, AlertTriangle, Plus, CheckCircle2, Package, RefreshCw, ArrowLeft, LayoutGrid, CalendarDays, CalendarRange } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, User, Truck, Clock, AlertTriangle, Plus, CheckCircle2, Package, RefreshCw, ArrowLeft, LayoutGrid, CalendarDays, CalendarRange, List } from 'lucide-react';
 import { format, addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns';
 import { createPageUrl } from '@/utils';
 import CreateJobForm from '../components/scheduling/CreateJobForm';
@@ -14,6 +14,7 @@ import { getJobCardInlineStyles, getBadgeStyles, getJobCardStyles } from '../com
 import DeliveryTypeLegend from '../components/scheduling/DeliveryTypeLegend';
 import EditPlaceholderForm from '../components/scheduling/EditPlaceholderForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const TRUCKS = [
   { id: 'ACCO1', name: 'ACCO1' },
@@ -49,7 +50,7 @@ export default function DailyJobBoard() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [selectedPlaceholder, setSelectedPlaceholder] = useState(null);
   const [isPlaceholderDialogOpen, setPlaceholderDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('daily'); // 'daily', 'weekly', 'monthly'
+  const [viewMode, setViewMode] = useState('daily'); // 'daily', 'weekly', 'monthly', 'list'
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -191,6 +192,7 @@ export default function DailyJobBoard() {
   }, [jobs, assignments, placeholders, deliveryTypes, customers, pickupLocations, selectedDate, currentUser, loading]);
 
   const goToPrevious = () => {
+    if (viewMode === 'list') return; // No navigation in list view
     if (viewMode === 'daily') {
       const newDate = subDays(new Date(selectedDate), 1);
       setSelectedDate(format(newDate, 'yyyy-MM-dd'));
@@ -204,6 +206,7 @@ export default function DailyJobBoard() {
   };
 
   const goToNext = () => {
+    if (viewMode === 'list') return; // No navigation in list view
     if (viewMode === 'daily') {
       const newDate = addDays(new Date(selectedDate), 1);
       setSelectedDate(format(newDate, 'yyyy-MM-dd'));
@@ -267,6 +270,7 @@ export default function DailyJobBoard() {
   };
 
   const getDateRangeLabel = () => {
+    if (viewMode === 'list') return 'All Jobs';
     const date = new Date(selectedDate);
     if (viewMode === 'daily') {
       return format(date, 'EEEE, MMMM d, yyyy');
@@ -388,25 +392,40 @@ export default function DailyJobBoard() {
               <CalendarRange className="h-4 w-4 mr-1" />
               Monthly
             </Button>
+            {currentUser?.appRole === 'customer' && (
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="flex-1"
+              >
+                <List className="h-4 w-4 mr-1" />
+                All Jobs
+              </Button>
+            )}
           </div>
 
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <Button variant="ghost" size="icon" onClick={goToPrevious} className="h-9 w-9">
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
+          {viewMode !== 'list' && (
+            <>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <Button variant="ghost" size="icon" onClick={goToPrevious} className="h-9 w-9">
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
 
-            <div className="flex-1 text-center">
-              <p className="text-sm font-semibold text-gray-900">{getDateRangeLabel()}</p>
-            </div>
+                <div className="flex-1 text-center">
+                  <p className="text-sm font-semibold text-gray-900">{getDateRangeLabel()}</p>
+                </div>
 
-            <Button variant="ghost" size="icon" onClick={goToNext} className="h-9 w-9">
-              <ChevronRight className="h-5 w-5" />
-            </Button>
-          </div>
+                <Button variant="ghost" size="icon" onClick={goToNext} className="h-9 w-9">
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
 
-          <Button variant="outline" size="sm" onClick={goToToday} className="w-full">
-            Today
-          </Button>
+              <Button variant="outline" size="sm" onClick={goToToday} className="w-full">
+                Today
+              </Button>
+            </>
+          )}
 
           {jobsFetching && (
             <div className="mt-2 flex items-center justify-center gap-2 text-xs text-blue-600">
@@ -878,6 +897,16 @@ export default function DailyJobBoard() {
                 <CalendarRange className="h-4 w-4 mr-1" />
                 Monthly
               </Button>
+              {currentUser?.appRole === 'customer' && (
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-4 w-4 mr-1" />
+                  All Jobs
+                </Button>
+              )}
             </div>
             
             <DeliveryTypeLegend />
@@ -895,17 +924,19 @@ export default function DailyJobBoard() {
             >
               <RefreshCw className={`h-4 w-4 ${jobsFetching ? 'animate-spin' : ''}`} />
             </Button>
-            <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
-              <Button variant="ghost" size="icon" onClick={goToPrevious}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={goToToday}>
-                Today
-              </Button>
-              <Button variant="ghost" size="icon" onClick={goToNext}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            {viewMode !== 'list' && (
+              <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
+                <Button variant="ghost" size="icon" onClick={goToPrevious}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={goToToday}>
+                  Today
+                </Button>
+                <Button variant="ghost" size="icon" onClick={goToNext}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             {(currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher') && (
               <Button size="sm" onClick={() => setCreateJobOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
