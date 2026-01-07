@@ -297,7 +297,20 @@ export default function DailyJobBoard() {
 
   const getJobsForDate = (date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return filteredJobs.filter(job => job.requestedDate === dateStr);
+    // For weekly and monthly views, fetch from all jobs, not just filtered by selected date
+    let visibleJobs = [...jobs];
+    
+    if (currentUser.role !== 'admin' && currentUser.appRole === 'customer' &&
+        (currentUser.customerId || currentUser.additionalCustomerIds?.length > 0)) {
+      const allowedCustomerIds = [
+        currentUser.customerId,
+        ...(currentUser.additionalCustomerIds || [])
+      ].filter(Boolean);
+      
+      visibleJobs = visibleJobs.filter((job) => allowedCustomerIds.includes(job.customerId));
+    }
+    
+    return visibleJobs.filter(job => job.requestedDate === dateStr);
   };
 
   const getStatsForDate = (date) => {
@@ -624,6 +637,7 @@ export default function DailyJobBoard() {
                                     </div>
                                   );
                                 });
+                            });
                             })()}
                             </>
                             )}
@@ -666,33 +680,33 @@ export default function DailyJobBoard() {
                             const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
 
                             return (
-                             <div
-                               key={job.id}
-                               onClick={() => {
-                                 setSelectedJob(job);
-                                 setJobDialogOpen(true);
-                               }}
-                               className="p-3 rounded-lg border-2 cursor-pointer transition-all"
-                               style={cardStyles}
-                             >
-                               <div className="flex justify-between items-start gap-2">
-                                 <div className="flex-1">
-                                   {deliveryType?.code && (
-                                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold mb-1 inline-block" style={badgeStyles}>
-                                       {deliveryType.code}
-                                     </span>
-                                   )}
-                                   <p className="font-semibold text-sm">{job.customerName}</p>
-                                   <p className="text-xs text-gray-600">{job.deliveryLocation}</p>
-                                   {job.deliveryWindow && (
-                                     <p className="text-xs text-gray-500 mt-1">{job.deliveryWindow}</p>
-                                   )}
-                                 </div>
-                                 {job.sqm && (
-                                   <Badge variant="outline" className="text-xs">{job.sqm}m²</Badge>
-                                 )}
-                               </div>
-                             </div>
+                            <div
+                            key={job.id}
+                            onClick={() => {
+                              setSelectedJob(job);
+                              setJobDialogOpen(true);
+                            }}
+                            className="p-3 rounded-lg border-2 cursor-pointer transition-all"
+                            style={cardStyles}
+                            >
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="flex-1">
+                                {deliveryType?.code && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold mb-1 inline-block" style={badgeStyles}>
+                                    {deliveryType.code}
+                                  </span>
+                                )}
+                                <p className="font-semibold text-sm">{job.customerName}</p>
+                                <p className="text-xs text-gray-600">{job.deliveryLocation}</p>
+                                {job.deliveryWindow && (
+                                  <p className="text-xs text-gray-500 mt-1">{job.deliveryWindow}</p>
+                                )}
+                              </div>
+                              {job.sqm && (
+                                <Badge variant="outline" className="text-xs">{job.sqm}m²</Badge>
+                              )}
+                            </div>
+                            </div>
                             );
                             })
                             )}
