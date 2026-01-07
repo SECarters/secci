@@ -571,12 +571,10 @@ export default function DailyJobBoard() {
                                         </div>
                                       </div>
                                       <div className="space-y-1">
-                                        {currentUser?.appRole !== 'customer' && (
-                                          <p className="font-semibold text-sm text-gray-900">
-                                            {job.customerName}
-                                          </p>
-                                        )}
-                                        <p className={`text-sm ${currentUser?.appRole === 'customer' ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                                        <p className="font-semibold text-sm text-gray-900">
+                                          {job.customerName}
+                                        </p>
+                                        <p className="text-sm text-gray-700">
                                           {job.deliveryLocation}
                                         </p>
                                         <p className="text-xs text-gray-600">
@@ -697,12 +695,8 @@ export default function DailyJobBoard() {
                                       {deliveryType.code}
                                     </span>
                                   )}
-                                  {currentUser?.appRole !== 'customer' && (
-                                    <p className="font-semibold text-sm">{job.customerName}</p>
-                                  )}
-                                  <p className={`text-xs ${currentUser?.appRole === 'customer' ? 'font-semibold text-sm' : 'text-gray-600'}`}>
-                                    {job.deliveryLocation}
-                                  </p>
+                                  <p className="font-semibold text-sm">{job.customerName}</p>
+                                  <p className="text-xs text-gray-600">{job.deliveryLocation}</p>
                                   {job.deliveryWindow && (
                                     <p className="text-xs text-gray-500 mt-1">{job.deliveryWindow}</p>
                                   )}
@@ -1030,12 +1024,10 @@ export default function DailyJobBoard() {
                                             </span>
                                           </div>
                                         )}
-                                        {currentUser?.appRole !== 'customer' && (
-                                          <h4 className="font-semibold text-sm mb-0.5 text-gray-900">
-                                            {job.customerName}
-                                          </h4>
-                                        )}
-                                        <p className={`text-xs ${currentUser?.appRole === 'customer' ? 'font-semibold text-sm text-gray-900 mb-0.5' : 'text-gray-700'} truncate`}>
+                                        <h4 className="font-semibold text-sm mb-0.5 text-gray-900">
+                                          {job.customerName}
+                                        </h4>
+                                        <p className="text-xs truncate text-gray-700">
                                           {job.deliveryLocation}
                                         </p>
                                         <p className="text-xs mt-0.5 text-gray-600">
@@ -1156,11 +1148,7 @@ export default function DailyJobBoard() {
                               className="p-2 rounded border cursor-pointer hover:shadow-md transition-all text-xs"
                               style={cardStyles}
                             >
-                              {currentUser?.appRole !== 'customer' ? (
-                                <p className="font-semibold truncate">{job.customerName}</p>
-                              ) : (
-                                <p className="font-semibold truncate">{job.deliveryLocation}</p>
-                              )}
+                              <p className="font-semibold truncate">{job.customerName}</p>
                               {job.sqm && (
                                 <p className="text-gray-600">{job.sqm}m²</p>
                               )}
