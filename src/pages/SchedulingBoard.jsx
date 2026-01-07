@@ -118,7 +118,7 @@ export default function SchedulingBoard() {
       
       const [allAvailableJobs, todaysAssignments, allDeliveryTypes, todaysPlaceholders, readStatusList, allPickupLocations] = await Promise.all([
         base44.entities.Job.filter({ 
-          status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED', 'RETURNED'] }
+          status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED', 'RETURNED', 'IN_TRANSIT'] }
         }),
         base44.entities.Assignment.filter({ date: format(date, 'yyyy-MM-dd') }),
         base44.entities.DeliveryType.list(),
@@ -162,8 +162,15 @@ export default function SchedulingBoard() {
   useEffect(() => {
     if (currentUser && (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher')) {
       fetchData();
-    }
-  }, [fetchData, currentUser]);
+
+      // Set up polling for real-time updates every 5 seconds
+      const pollInterval = setInterval(() => {
+        fetchData();
+      }, 5000);
+
+      return () => clearInterval(pollInterval);
+      }
+      }, [fetchData, currentUser]);
 
 
 

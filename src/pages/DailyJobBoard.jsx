@@ -57,15 +57,17 @@ export default function DailyJobBoard() {
   const { data: jobs = [], isLoading: jobsLoading, isFetching: jobsFetching } = useQuery({
     queryKey: ['jobs', 'realtime'],
     queryFn: () => base44.entities.Job.filter({ 
-      status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED', 'RETURNED'] }
+      status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED', 'RETURNED', 'IN_TRANSIT'] }
     }),
     staleTime: 0,
+    refetchInterval: 5000, // Poll every 5 seconds for real-time updates
   });
 
   const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
     queryKey: ['assignments', 'realtime'],
     queryFn: () => base44.entities.Assignment.list(),
     staleTime: 0,
+    refetchInterval: 5000, // Poll every 5 seconds
   });
 
   const { data: placeholders = [], isLoading: placeholdersLoading } = useQuery({
@@ -484,6 +486,36 @@ export default function DailyJobBoard() {
                                             {job.siteContactName} - {job.siteContactPhone}
                                           </p>
                                         )}
+                                        {job.status === 'IN_TRANSIT' && (
+                                          <Badge className="bg-blue-600 text-white text-xs mt-2 animate-pulse">
+                                            <Truck className="h-3 w-3 mr-1" />
+                                            IN TRANSIT
+                                          </Badge>
+                                        )}
+                                        {job.driverStatus === 'EN_ROUTE' && (
+                                          <Badge className="bg-indigo-600 text-white text-xs mt-2">
+                                            <Truck className="h-3 w-3 mr-1" />
+                                            EN ROUTE
+                                          </Badge>
+                                        )}
+                                        {job.driverStatus === 'ARRIVED' && (
+                                          <Badge className="bg-purple-600 text-white text-xs mt-2">
+                                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                                            ARRIVED
+                                          </Badge>
+                                        )}
+                                        {job.driverStatus === 'UNLOADING' && (
+                                          <Badge className="bg-orange-600 text-white text-xs mt-2 animate-pulse">
+                                            <Package className="h-3 w-3 mr-1" />
+                                            UNLOADING
+                                          </Badge>
+                                        )}
+                                        {job.driverStatus === 'PROBLEM' && (
+                                          <Badge className="bg-red-600 text-white text-xs mt-2">
+                                            <AlertTriangle className="h-3 w-3 mr-1" />
+                                            PROBLEM
+                                          </Badge>
+                                        )}
                                         {job.status === 'DELIVERED' && (
                                           <Badge className="bg-green-600 text-white text-xs mt-2">
                                             <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -772,6 +804,36 @@ export default function DailyJobBoard() {
                                         <User className="h-3 w-3" />
                                         {job.siteContactName} - {job.siteContactPhone}
                                       </p>
+                                    )}
+                                    {job.status === 'IN_TRANSIT' && (
+                                      <Badge className="bg-blue-600 text-white text-xs mt-2 animate-pulse">
+                                        <Truck className="h-3 w-3 mr-1" />
+                                        IN TRANSIT
+                                      </Badge>
+                                    )}
+                                    {job.driverStatus === 'EN_ROUTE' && (
+                                      <Badge className="bg-indigo-600 text-white text-xs mt-2">
+                                        <Truck className="h-3 w-3 mr-1" />
+                                        EN ROUTE
+                                      </Badge>
+                                    )}
+                                    {job.driverStatus === 'ARRIVED' && (
+                                      <Badge className="bg-purple-600 text-white text-xs mt-2">
+                                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                                        ARRIVED
+                                      </Badge>
+                                    )}
+                                    {job.driverStatus === 'UNLOADING' && (
+                                      <Badge className="bg-orange-600 text-white text-xs mt-2 animate-pulse">
+                                        <Package className="h-3 w-3 mr-1" />
+                                        UNLOADING
+                                      </Badge>
+                                    )}
+                                    {job.driverStatus === 'PROBLEM' && (
+                                      <Badge className="bg-red-600 text-white text-xs mt-2">
+                                        <AlertTriangle className="h-3 w-3 mr-1" />
+                                        PROBLEM
+                                      </Badge>
                                     )}
                                     {job.status === 'DELIVERED' && (
                                       <Badge className="bg-green-600 text-white text-xs mt-2">
