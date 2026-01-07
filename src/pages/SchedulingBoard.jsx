@@ -127,7 +127,7 @@ export default function SchedulingBoard() {
         base44.entities.PickupLocation.list()
       ]);
 
-      const currentTenant = currentUser.tenantId || 'SouthEastCarters';
+      const currentTenant = currentUser.tenantId || 'plasterboard_dispatch';
       let visibleJobs = [...allAvailableJobs];
 
       if (currentTenant === 'outreach_hire') {
@@ -143,7 +143,7 @@ export default function SchedulingBoard() {
       } else {
         visibleJobs = visibleJobs.filter(job => 
           !job.tenantId ||
-          job.tenantId === 'SouthEastCarters' || 
+          job.tenantId === 'plasterboard_dispatch' || 
           job.category === 'Plasterboard'
         );
       }
