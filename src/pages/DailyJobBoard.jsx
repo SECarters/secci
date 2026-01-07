@@ -122,6 +122,12 @@ export default function DailyJobBoard() {
       return { jobsByTruck: {}, filteredJobs: [], dateFilteredPlaceholders: [] };
     }
 
+    // Hide placeholders from customers
+    const canSeePlaceholders = currentUser.role === 'admin' || 
+      currentUser.appRole === 'dispatcher' || 
+      currentUser.appRole === 'manager' ||
+      currentUser.appRole === 'driver';
+
     let visibleJobs = [...jobs];
 
     if (currentUser.role !== 'admin' && currentUser.appRole === 'customer' &&
@@ -170,7 +176,9 @@ export default function DailyJobBoard() {
       });
     });
 
-    const dateFilteredPlaceholders = placeholders.filter((p) => p.date === selectedDate);
+    const dateFilteredPlaceholders = canSeePlaceholders 
+      ? placeholders.filter((p) => p.date === selectedDate)
+      : [];
 
     return {
       jobsByTruck: newJobsByTruck,
