@@ -3,8 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar, User, Truck, Clock, AlertTriangle, Plus, CheckCircle2, Package, RefreshCw, ArrowLeft } from 'lucide-react';
-import { format, addDays, subDays } from 'date-fns';
+import { ChevronLeft, ChevronRight, Calendar, User, Truck, Clock, AlertTriangle, Plus, CheckCircle2, Package, RefreshCw, ArrowLeft, LayoutGrid, CalendarDays, CalendarRange } from 'lucide-react';
+import { format, addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns';
 import { createPageUrl } from '@/utils';
 import CreateJobForm from '../components/scheduling/CreateJobForm';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
@@ -49,6 +49,7 @@ export default function DailyJobBoard() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [selectedPlaceholder, setSelectedPlaceholder] = useState(null);
   const [isPlaceholderDialogOpen, setPlaceholderDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('daily'); // 'daily', 'weekly', 'monthly'
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -189,14 +190,30 @@ export default function DailyJobBoard() {
     };
   }, [jobs, assignments, placeholders, deliveryTypes, customers, pickupLocations, selectedDate, currentUser, loading]);
 
-  const goToPreviousDay = () => {
-    const newDate = subDays(new Date(selectedDate), 1);
-    setSelectedDate(format(newDate, 'yyyy-MM-dd'));
+  const goToPrevious = () => {
+    if (viewMode === 'daily') {
+      const newDate = subDays(new Date(selectedDate), 1);
+      setSelectedDate(format(newDate, 'yyyy-MM-dd'));
+    } else if (viewMode === 'weekly') {
+      const newDate = subWeeks(new Date(selectedDate), 1);
+      setSelectedDate(format(newDate, 'yyyy-MM-dd'));
+    } else {
+      const newDate = subMonths(new Date(selectedDate), 1);
+      setSelectedDate(format(newDate, 'yyyy-MM-dd'));
+    }
   };
 
-  const goToNextDay = () => {
-    const newDate = addDays(new Date(selectedDate), 1);
-    setSelectedDate(format(newDate, 'yyyy-MM-dd'));
+  const goToNext = () => {
+    if (viewMode === 'daily') {
+      const newDate = addDays(new Date(selectedDate), 1);
+      setSelectedDate(format(newDate, 'yyyy-MM-dd'));
+    } else if (viewMode === 'weekly') {
+      const newDate = addWeeks(new Date(selectedDate), 1);
+      setSelectedDate(format(newDate, 'yyyy-MM-dd'));
+    } else {
+      const newDate = addMonths(new Date(selectedDate), 1);
+      setSelectedDate(format(newDate, 'yyyy-MM-dd'));
+    }
   };
 
   const goToToday = () => {
@@ -249,6 +266,49 @@ export default function DailyJobBoard() {
     });
   };
 
+  const getDateRangeLabel = () => {
+    const date = new Date(selectedDate);
+    if (viewMode === 'daily') {
+      return format(date, 'EEEE, MMMM d, yyyy');
+    } else if (viewMode === 'weekly') {
+      const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+      return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`;
+    } else {
+      return format(date, 'MMMM yyyy');
+    }
+  };
+
+  const getWeekDays = () => {
+    const date = new Date(selectedDate);
+    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+    return eachDayOfInterval({
+      start: weekStart,
+      end: endOfWeek(date, { weekStartsOn: 1 })
+    });
+  };
+
+  const getMonthDays = () => {
+    const date = new Date(selectedDate);
+    const monthStart = startOfMonth(date);
+    const monthEnd = endOfMonth(date);
+    return eachDayOfInterval({ start: monthStart, end: monthEnd });
+  };
+
+  const getJobsForDate = (date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return filteredJobs.filter(job => job.requestedDate === dateStr);
+  };
+
+  const getStatsForDate = (date) => {
+    const jobsForDate = getJobsForDate(date);
+    const totalM2 = jobsForDate.reduce((sum, job) => sum + (job.sqm || 0), 0);
+    return {
+      count: jobsForDate.length,
+      totalM2
+    };
+  };
+
   if (currentUser === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -263,7 +323,9 @@ export default function DailyJobBoard() {
       <div className="min-h-screen bg-gray-50 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="bg-white border-b px-4 py-4 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl font-bold text-gray-900">Daily Job Board</h1>
+            <h1 className="text-xl font-bold text-gray-900">
+              {currentUser?.appRole === 'customer' ? 'Scheduler' : 'Daily Job Board'}
+            </h1>
             <div className="flex items-center gap-2">
               <DeliveryTypeLegend />
               <Button
@@ -284,27 +346,52 @@ export default function DailyJobBoard() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2">
-            <Button variant="ghost" size="icon" onClick={goToPreviousDay} className="h-9 w-9">
+          {/* View Mode Toggle */}
+          <div className="flex items-center justify-center gap-1 mb-3 bg-gray-100 rounded-lg p-1">
+            <Button
+              variant={viewMode === 'daily' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('daily')}
+              className="flex-1"
+            >
+              <LayoutGrid className="h-4 w-4 mr-1" />
+              Daily
+            </Button>
+            <Button
+              variant={viewMode === 'weekly' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('weekly')}
+              className="flex-1"
+            >
+              <CalendarDays className="h-4 w-4 mr-1" />
+              Weekly
+            </Button>
+            <Button
+              variant={viewMode === 'monthly' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('monthly')}
+              className="flex-1"
+            >
+              <CalendarRange className="h-4 w-4 mr-1" />
+              Monthly
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <Button variant="ghost" size="icon" onClick={goToPrevious} className="h-9 w-9">
               <ChevronLeft className="h-5 w-5" />
             </Button>
 
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg flex-1 justify-center">
-              <Calendar className="h-4 w-4 text-gray-500" />
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="border-none bg-transparent text-sm font-medium focus:outline-none text-center"
-              />
+            <div className="flex-1 text-center">
+              <p className="text-sm font-semibold text-gray-900">{getDateRangeLabel()}</p>
             </div>
 
-            <Button variant="ghost" size="icon" onClick={goToNextDay} className="h-9 w-9">
+            <Button variant="ghost" size="icon" onClick={goToNext} className="h-9 w-9">
               <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
 
-          <Button variant="outline" size="sm" onClick={goToToday} className="w-full mt-2">
+          <Button variant="outline" size="sm" onClick={goToToday} className="w-full">
             Today
           </Button>
 
@@ -320,7 +407,7 @@ export default function DailyJobBoard() {
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
-        ) : (
+        ) : viewMode === 'daily' ? (
           <div className="px-4 py-4 pb-24">
             <div className="space-y-4">
               {TIME_SLOTS.map((slot) => {
@@ -591,10 +678,40 @@ export default function DailyJobBoard() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Daily Job Board</h1>
-            <p className="text-gray-600 mt-1">View all scheduled deliveries for the day</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {currentUser?.appRole === 'customer' ? 'Scheduler' : 'Daily Job Board'}
+            </h1>
+            <p className="text-gray-600 mt-1">{getDateRangeLabel()}</p>
           </div>
           <div className="flex items-center gap-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <Button
+                variant={viewMode === 'daily' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('daily')}
+              >
+                <LayoutGrid className="h-4 w-4 mr-1" />
+                Daily
+              </Button>
+              <Button
+                variant={viewMode === 'weekly' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('weekly')}
+              >
+                <CalendarDays className="h-4 w-4 mr-1" />
+                Weekly
+              </Button>
+              <Button
+                variant={viewMode === 'monthly' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('monthly')}
+              >
+                <CalendarRange className="h-4 w-4 mr-1" />
+                Monthly
+              </Button>
+            </div>
+            
             <DeliveryTypeLegend />
             {jobsFetching && (
               <div className="flex items-center gap-2 text-sm text-blue-600">
@@ -611,25 +728,16 @@ export default function DailyJobBoard() {
               <RefreshCw className={`h-4 w-4 ${jobsFetching ? 'animate-spin' : ''}`} />
             </Button>
             <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
-              <Button variant="ghost" size="icon" onClick={goToPreviousDay}>
+              <Button variant="ghost" size="icon" onClick={goToPrevious}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <div className="flex items-center gap-2 px-3">
-                <Calendar className="h-4 w-4 text-gray-500" />
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="border-none bg-transparent text-sm font-medium focus:outline-none"
-                />
-              </div>
-              <Button variant="ghost" size="icon" onClick={goToNextDay}>
+              <Button variant="outline" size="sm" onClick={goToToday}>
+                Today
+              </Button>
+              <Button variant="ghost" size="icon" onClick={goToNext}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              Today
-            </Button>
             {(currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher') && (
               <Button size="sm" onClick={() => setCreateJobOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -643,7 +751,7 @@ export default function DailyJobBoard() {
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
-        ) : (
+        ) : viewMode === 'daily' ? (
           <div className="px-4 md:px-6 py-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {TIME_SLOTS.map((slot) => {
@@ -862,6 +970,119 @@ export default function DailyJobBoard() {
                   </Card>
                 );
               })}
+            </div>
+          </div>
+        ) : viewMode === 'weekly' ? (
+          <div className="px-4 md:px-6 py-6">
+            <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+              {getWeekDays().map((day) => {
+                const dayJobs = getJobsForDate(day);
+                const isToday = isSameDay(day, new Date());
+                
+                return (
+                  <Card key={format(day, 'yyyy-MM-dd')} className={isToday ? 'border-blue-500 border-2' : ''}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm">
+                        <div className="flex flex-col items-center">
+                          <span className="font-semibold">{format(day, 'EEE')}</span>
+                          <span className="text-xl font-bold">{format(day, 'd')}</span>
+                          {isToday && <Badge variant="default" className="mt-1 text-xs">Today</Badge>}
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {dayJobs.length === 0 ? (
+                        <p className="text-xs text-gray-500 text-center py-2">No jobs</p>
+                      ) : (
+                        dayJobs.map((job) => {
+                          const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
+                          const cardStyles = getJobCardInlineStyles(deliveryType, job);
+                          
+                          return (
+                            <div
+                              key={job.id}
+                              onClick={() => {
+                                setSelectedJob(job);
+                                setJobDialogOpen(true);
+                              }}
+                              className="p-2 rounded border cursor-pointer hover:shadow-md transition-all text-xs"
+                              style={cardStyles}
+                            >
+                              <p className="font-semibold truncate">{job.customerName}</p>
+                              {job.sqm && (
+                                <p className="text-gray-600">{job.sqm}m²</p>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="px-4 md:px-6 py-6">
+            <div className="max-w-5xl mx-auto">
+              <div className="grid grid-cols-7 gap-2 mb-2">
+                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                  <div key={day} className="text-center text-sm font-semibold text-gray-600 py-2">
+                    {day.substring(0, 3)}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="grid grid-cols-7 gap-2">
+                {(() => {
+                  const monthStart = startOfMonth(new Date(selectedDate));
+                  const monthEnd = endOfMonth(new Date(selectedDate));
+                  const startDay = startOfWeek(monthStart, { weekStartsOn: 1 });
+                  const endDay = endOfWeek(monthEnd, { weekStartsOn: 1 });
+                  const allDays = eachDayOfInterval({ start: startDay, end: endDay });
+                  
+                  return allDays.map((day) => {
+                    const isCurrentMonth = day.getMonth() === new Date(selectedDate).getMonth();
+                    const isToday = isSameDay(day, new Date());
+                    const stats = getStatsForDate(day);
+                    const hasJobs = stats.count > 0;
+                    
+                    return (
+                      <div
+                        key={format(day, 'yyyy-MM-dd')}
+                        className={`
+                          group relative aspect-square border rounded-lg p-3 transition-all
+                          ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white hover:bg-gray-50'}
+                          ${isToday ? 'border-blue-500 border-2 bg-blue-50' : 'border-gray-200'}
+                          ${hasJobs ? 'cursor-pointer hover:shadow-lg' : ''}
+                        `}
+                        onClick={() => {
+                          if (hasJobs) {
+                            setSelectedDate(format(day, 'yyyy-MM-dd'));
+                            setViewMode('daily');
+                          }
+                        }}
+                      >
+                        <div className="text-sm font-medium">{format(day, 'd')}</div>
+                        {hasJobs && (
+                          <>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-2 opacity-0 group-hover:opacity-100 bg-white/98 rounded-lg transition-opacity z-10">
+                              <div className="text-sm font-semibold text-gray-900">{stats.count} {stats.count === 1 ? 'job' : 'jobs'}</div>
+                              <div className="text-sm text-gray-600">{stats.totalM2.toFixed(0)}m² total</div>
+                            </div>
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+                              <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                                <span className="text-xs font-medium text-gray-600">{stats.count}</span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
             </div>
           </div>
         )}
