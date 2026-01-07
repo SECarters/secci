@@ -230,7 +230,10 @@ export default function DailyJobBoard() {
     // Use search-filtered jobs instead of raw jobs
     visibleJobs = searchFilteredJobs.filter(j => visibleJobs.some(vj => vj.id === j.id));
 
-    const dateFilteredAndVisibleJobs = visibleJobs.filter((job) => job.requestedDate === selectedDate);
+    // For "list" view, show ALL jobs (no date filter), otherwise filter by selected date
+    const dateFilteredAndVisibleJobs = viewMode === 'list' 
+      ? visibleJobs 
+      : visibleJobs.filter((job) => job.requestedDate === selectedDate);
 
     const newJobsByTruck = {};
     TRUCKS.forEach((truck) => {
@@ -275,7 +278,7 @@ export default function DailyJobBoard() {
       filteredJobs: dateFilteredAndVisibleJobs,
       dateFilteredPlaceholders
     };
-  }, [searchFilteredJobs, assignments, placeholders, deliveryTypes, customers, pickupLocations, selectedDate, currentUser, loading]);
+  }, [searchFilteredJobs, assignments, placeholders, deliveryTypes, customers, pickupLocations, selectedDate, currentUser, loading, viewMode]);
 
   const goToPrevious = () => {
     if (viewMode === 'list') return; // No navigation in list view
