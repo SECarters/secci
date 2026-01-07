@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ArrowUp, Construction, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, ArrowUp, Construction, ArrowLeft, Truck, CheckCircle2, Package } from 'lucide-react';
 
 export default function JobCard({ job, deliveryTypes }) {
   const deliveryType = deliveryTypes?.find(dt => dt.id === job.deliveryTypeId);
@@ -108,6 +108,46 @@ export default function JobCard({ job, deliveryTypes }) {
       {job.pickupLocation && (
         <p className={`text-xs mt-1 ${isReturned ? 'text-gray-500' : 'text-gray-500'}`}>{job.pickupLocation}</p>
       )}
+      
+      {/* Real-time status indicators */}
+      <div className="flex flex-wrap gap-1 mt-2">
+        {job.status === 'IN_TRANSIT' && (
+          <Badge className="bg-blue-600 text-white text-xs animate-pulse">
+            <Truck className="h-3 w-3 mr-1" />
+            IN TRANSIT
+          </Badge>
+        )}
+        {job.driverStatus === 'EN_ROUTE' && (
+          <Badge className="bg-indigo-600 text-white text-xs">
+            <Truck className="h-3 w-3 mr-1" />
+            EN ROUTE
+          </Badge>
+        )}
+        {job.driverStatus === 'ARRIVED' && (
+          <Badge className="bg-purple-600 text-white text-xs">
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            ARRIVED
+          </Badge>
+        )}
+        {job.driverStatus === 'UNLOADING' && (
+          <Badge className="bg-orange-600 text-white text-xs animate-pulse">
+            <Package className="h-3 w-3 mr-1" />
+            UNLOADING
+          </Badge>
+        )}
+        {job.driverStatus === 'PROBLEM' && (
+          <Badge className="bg-red-600 text-white text-xs">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            PROBLEM
+          </Badge>
+        )}
+        {job.status === 'DELIVERED' && (
+          <Badge className="bg-green-600 text-white text-xs">
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            DELIVERED
+          </Badge>
+        )}
+      </div>
       {job.sheetList && job.sheetList.length > 0 && (
         <div className="mt-2 pt-2 border-t border-gray-200">
           <p className="text-[10px] font-medium text-gray-500 mb-1">Items: {job.sheetList.length}</p>
