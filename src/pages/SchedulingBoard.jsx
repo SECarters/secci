@@ -127,26 +127,7 @@ export default function SchedulingBoard() {
         base44.entities.PickupLocation.list()
       ]);
 
-      const currentTenant = currentUser.tenantId || 'plasterboard_dispatch';
       let visibleJobs = [...allAvailableJobs];
-
-      if (currentTenant === 'outreach_hire') {
-        const manitouCodes = ['UPDWN', 'UNITUP', 'MANS'];
-        const manitouTypeIds = allDeliveryTypes
-          .filter(dt => manitouCodes.includes(dt.code))
-          .map(dt => dt.id);
-        
-        visibleJobs = visibleJobs.filter(job => 
-          job.requiresManitou || 
-          manitouTypeIds.includes(job.deliveryTypeId)
-        );
-      } else {
-        visibleJobs = visibleJobs.filter(job => 
-          !job.tenantId ||
-          job.tenantId === 'plasterboard_dispatch' || 
-          job.category === 'Plasterboard'
-        );
-      }
 
       setJobs(visibleJobs);
       setAssignments(todaysAssignments);
