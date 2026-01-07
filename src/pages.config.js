@@ -12,10 +12,10 @@ import DriverMyRuns from './pages/DriverMyRuns';
 import Home from './pages/Home';
 import LiveTracking from './pages/LiveTracking';
 import Reports from './pages/Reports';
+import SchedulingBoard from './pages/SchedulingBoard';
 import SheetSpecs from './pages/SheetSpecs';
 import TestEmails from './pages/TestEmails';
 import WeatherToday from './pages/WeatherToday';
-import SchedulingBoard from './pages/SchedulingBoard';
 import __Layout from './Layout.jsx';
 
 
@@ -34,10 +34,10 @@ export const PAGES = {
     "Home": Home,
     "LiveTracking": LiveTracking,
     "Reports": Reports,
+    "SchedulingBoard": SchedulingBoard,
     "SheetSpecs": SheetSpecs,
     "TestEmails": TestEmails,
     "WeatherToday": WeatherToday,
-    "SchedulingBoard": SchedulingBoard,
 }
 
 export const pagesConfig = {
