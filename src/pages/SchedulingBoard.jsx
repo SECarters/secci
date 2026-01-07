@@ -162,15 +162,8 @@ export default function SchedulingBoard() {
   useEffect(() => {
     if (currentUser && (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher')) {
       fetchData();
-
-      // Set up polling for real-time updates every 5 seconds
-      const pollInterval = setInterval(() => {
-        fetchData();
-      }, 5000);
-
-      return () => clearInterval(pollInterval);
-      }
-      }, [fetchData, currentUser]);
+    }
+  }, [fetchData, currentUser]);
 
 
 
