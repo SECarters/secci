@@ -153,6 +153,10 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
 
     if (newErrors.length > 0) {
       setErrors(prev => [...prev, ...newErrors]);
+      base44.analytics.track({
+        eventName: 'pod_photo_validation_failed',
+        properties: { error_count: newErrors.length, job_id: job.id }
+      });
     }
 
     if (validFiles.length === 0) {
@@ -280,6 +284,10 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         } catch (error) {
           console.error(`Failed to prepare photo ${i + 1} (${photoName}):`, error);
           currentSubmissionErrors.push(`Photo ${i + 1} (${photoName}): ${error.message || 'Processing failed'}`);
+          base44.analytics.track({
+            eventName: 'pod_photo_processing_failed',
+            properties: { photo_index: i + 1, job_id: job.id, error: error.message }
+          });
         }
       }
 
@@ -341,6 +349,14 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         if (directUploadUrls.length === 0) {
           console.error('All direct uploads failed. Errors:', directUploadErrors);
           setErrors(directUploadErrors);
+          base44.analytics.track({
+            eventName: 'pod_direct_upload_failed',
+            properties: { 
+              photo_count: photos.length, 
+              job_id: job.id,
+              total_size_mb: (totalSize / 1024 / 1024).toFixed(2)
+            }
+          });
           throw new Error(`Unable to upload any photos. Please check your internet connection and try again with fewer or smaller photos. If the issue persists, try taking new photos.`);
         }
         
@@ -502,6 +518,13 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
       setProcessingIndex(-1);
 
       if (uploadedUrls.length === 0 && compressedPhotosDataURLs.length > 0) {
+        base44.analytics.track({
+          eventName: 'pod_upload_complete_failure',
+          properties: { 
+            photo_count: compressedPhotosDataURLs.length,
+            job_id: job.id
+          }
+        });
         throw new Error('No photos were successfully uploaded. Please try: 1) Using fewer photos, 2) Checking your internet connection, or 3) Taking new photos.');
       }
       
@@ -590,6 +613,15 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
     } catch (error) {
       console.error('POD submission error:', error);
       const errorMessage = error?.message || String(error) || "Failed to submit proof of delivery. Please try again.";
+      base44.analytics.track({
+        eventName: 'pod_submission_failed',
+        properties: { 
+          photo_count: photos.length,
+          job_id: job.id,
+          error: errorMessage,
+          is_online: isOnline
+        }
+      });
       toast({
         title: "Submission Failed",
         description: errorMessage,
