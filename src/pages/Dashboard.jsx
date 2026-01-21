@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Package, Truck, TrendingUp, Cloud, Droplets, Clock as ClockIcon, AlertTriangle, CalendarRange } from 'lucide-react';
 import { format, startOfDay, startOfWeek, addDays } from 'date-fns';
 import { createPageUrl } from '@/utils';
-import PODErrorsDashboard from '../components/analytics/PODErrorsDashboard';
 
 export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -492,11 +491,6 @@ export default function DashboardPage() {
       </div>
 
 
-
-      {/* POD Errors Dashboard - Admin and Dispatchers only */}
-      {(currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher') && (
-        <PODErrorsDashboard />
-      )}
 
       {/* Quick Actions */}
       <div>
