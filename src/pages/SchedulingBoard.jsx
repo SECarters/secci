@@ -433,11 +433,33 @@ export default function SchedulingBoard() {
     
     try {
       if (sourceAssignment) {
+        // Moving an existing job - check if we need to reorder the source slot
+        const shouldReorderSource = sourceAssignment.truckId !== destinationTruckId || 
+                                    sourceAssignment.timeSlotId !== destinationTimeSlotId;
+        
         await base44.entities.Assignment.update(sourceAssignment.id, { 
           truckId: destinationTruckId, 
           timeSlotId: destinationTimeSlotId, 
           slotPosition: finalSlotPosition 
         });
+        
+        // Reorder jobs in the source slot if job moved to a different slot
+        if (shouldReorderSource) {
+          const jobsInSourceSlot = assignments.filter(a => 
+            a.truckId === sourceAssignment.truckId && 
+            a.timeSlotId === sourceAssignment.timeSlotId &&
+            a.id !== sourceAssignment.id
+          ).sort((a, b) => a.slotPosition - b.slotPosition);
+
+          for (let i = 0; i < jobsInSourceSlot.length; i++) {
+            const newPosition = i + 1;
+            if (jobsInSourceSlot[i].slotPosition !== newPosition) {
+              await base44.entities.Assignment.update(jobsInSourceSlot[i].id, {
+                slotPosition: newPosition
+              });
+            }
+          }
+        }
       } else {
         await base44.entities.Assignment.create({
           jobId,
