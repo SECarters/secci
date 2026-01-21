@@ -560,6 +560,8 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                          formData.nonStandardDelivery.zoneC || 
                          formData.nonStandardDelivery.other;
 
+      const user = await base44.auth.me();
+      
       const newJob = await base44.entities.Job.create({
         customerId: formData.customerId,
         deliveryTypeId: formData.deliveryTypeId,
@@ -638,6 +640,18 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       } catch (emailError) {
         console.error('Failed to send email notifications:', emailError);
       }
+
+      // Log job creation
+      await base44.entities.JobActivityLog.create({
+        jobId: newJob.id,
+        customerId: newJob.customerId,
+        customerName: selectedCustomer.customerName,
+        activityType: 'created',
+        description: `Job created${isDirectlyScheduled ? ' and scheduled' : ''}`,
+        userId: user.id,
+        userName: user.full_name,
+        userRole: user.role === 'admin' ? 'admin' : user.appRole || 'customer'
+      });
 
       toast({
         title: "Job Created!",

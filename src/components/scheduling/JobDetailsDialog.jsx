@@ -98,6 +98,20 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
     try {
       await base44.entities.Job.update(currentJob.id, { ...currentJob, status: 'APPROVED' });
 
+      // Log status change
+      await base44.entities.JobActivityLog.create({
+        jobId: currentJob.id,
+        customerId: currentJob.customerId,
+        customerName: currentJob.customerName,
+        activityType: 'approved',
+        description: 'Job approved',
+        userId: currentUser.id,
+        userName: currentUser.full_name,
+        userRole: currentUser.role === 'admin' ? 'admin' : currentUser.appRole,
+        oldValue: 'PENDING_APPROVAL',
+        newValue: 'APPROVED'
+      });
+
       // Invalidate queries for instant update
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
       queryClient.invalidateQueries({ queryKey: ['job', currentJob.id] });
@@ -122,6 +136,20 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
   const handleCancel = async () => {
     try {
       await base44.entities.Job.update(currentJob.id, { ...currentJob, status: 'CANCELLED' });
+
+      // Log status change
+      await base44.entities.JobActivityLog.create({
+        jobId: currentJob.id,
+        customerId: currentJob.customerId,
+        customerName: currentJob.customerName,
+        activityType: 'cancelled',
+        description: 'Job cancelled',
+        userId: currentUser.id,
+        userName: currentUser.full_name,
+        userRole: currentUser.role === 'admin' ? 'admin' : currentUser.appRole,
+        oldValue: currentJob.status,
+        newValue: 'CANCELLED'
+      });
 
       // Invalidate queries for instant update
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
@@ -419,6 +447,20 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                             await base44.entities.Job.update(currentJob.id, { 
                               ...currentJob, 
                               status: newStatus
+                            });
+
+                            // Log status change
+                            await base44.entities.JobActivityLog.create({
+                              jobId: currentJob.id,
+                              customerId: currentJob.customerId,
+                              customerName: currentJob.customerName,
+                              activityType: newStatus === 'DELIVERED' ? 'delivered' : 'status_changed',
+                              description: newStatus === 'DELIVERED' ? 'Job marked as delivered' : 'Job reverted to scheduled',
+                              userId: currentUser.id,
+                              userName: currentUser.full_name,
+                              userRole: currentUser.role === 'admin' ? 'admin' : currentUser.appRole,
+                              oldValue: currentJob.status,
+                              newValue: newStatus
                             });
 
                             queryClient.invalidateQueries({ queryKey: ['jobs'] });

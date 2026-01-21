@@ -369,6 +369,8 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
         newStatus = 'APPROVED';
       }
 
+      const user = await base44.auth.me();
+      
       await base44.entities.Job.update(job.id, {
         customerId: formData.customerId,
         deliveryTypeId: formData.deliveryTypeId,
@@ -432,6 +434,18 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
         // Remove assignment if manual schedule is disabled
         await base44.entities.Assignment.delete(assignments[0].id);
       }
+
+      // Log job update
+      await base44.entities.JobActivityLog.create({
+        jobId: job.id,
+        customerId: formData.customerId,
+        customerName: selectedCustomer.customerName,
+        activityType: 'updated',
+        description: 'Job details updated',
+        userId: user.id,
+        userName: user.full_name,
+        userRole: user.role === 'admin' ? 'admin' : user.appRole || 'customer'
+      });
 
       toast({
         title: "Job Updated!",
