@@ -13,8 +13,8 @@ export default function RecentActivityTile() {
     const fetchActivities = async () => {
       setLoading(true);
       try {
-        // Fetch recent activity logs (last 20)
-        const logs = await base44.entities.JobActivityLog.list('-created_date', 20);
+        // Fetch all activity logs
+        const logs = await base44.entities.JobActivityLog.list('-created_date');
         setActivities(logs);
       } catch (error) {
         console.error('Failed to fetch activity logs:', error);
