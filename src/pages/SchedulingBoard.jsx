@@ -354,6 +354,24 @@ export default function SchedulingBoard() {
         try {
           await base44.entities.Assignment.delete(sourceAssignment.id);
           await base44.entities.Job.update(jobId, { ...jobToUpdate, status: 'APPROVED' });
+          
+          // Reorder remaining jobs in the same truck/time slot
+          const jobsInSameSlot = assignments.filter(a => 
+            a.truckId === sourceAssignment.truckId && 
+            a.timeSlotId === sourceAssignment.timeSlotId &&
+            a.id !== sourceAssignment.id
+          ).sort((a, b) => a.slotPosition - b.slotPosition);
+
+          // Reassign positions sequentially
+          for (let i = 0; i < jobsInSameSlot.length; i++) {
+            const newPosition = i + 1;
+            if (jobsInSameSlot[i].slotPosition !== newPosition) {
+              await base44.entities.Assignment.update(jobsInSameSlot[i].id, {
+                slotPosition: newPosition
+              });
+            }
+          }
+          
           await fetchData();
         } catch (error) {
           console.error('Error unscheduling job:', error);
