@@ -76,6 +76,8 @@ export default function ScheduleJobDialog({ job, assignment, open, onOpenChange,
     }
 
     try {
+      const user = await base44.auth.me();
+      
       if (assignment) {
         await base44.entities.Assignment.update(assignment.id, {
           truckId: formData.truckId,
@@ -94,6 +96,20 @@ export default function ScheduleJobDialog({ job, assignment, open, onOpenChange,
       }
 
       await base44.entities.Job.update(job.id, { status: 'SCHEDULED' });
+
+      // Log scheduling action
+      await base44.entities.JobActivityLog.create({
+        jobId: job.id,
+        customerId: job.customerId,
+        customerName: job.customerName,
+        activityType: 'scheduled',
+        description: `Job ${assignment ? 'rescheduled' : 'scheduled'} to ${TRUCKS.find(t => t.id === formData.truckId)?.name || formData.truckId} on ${format(new Date(formData.date), 'MMM dd, yyyy')}`,
+        userId: user.id,
+        userName: user.full_name,
+        userRole: user.role === 'admin' ? 'admin' : user.appRole,
+        oldValue: assignment ? `${assignment.truckId} - ${assignment.date}` : null,
+        newValue: `${formData.truckId} - ${formData.date}`
+      });
 
       try {
         const customers = await base44.entities.Customer.filter({ id: job.customerId });
