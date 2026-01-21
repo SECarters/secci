@@ -337,6 +337,16 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
               
               if (retryCount > maxRetries) {
                 directUploadErrors.push(`Photo ${i + 1} (${photos[i]?.name || 'N/A'}): ${errorMsg}`);
+                base44.analytics.track({
+                  eventName: 'pod_api_upload_failed',
+                  properties: { 
+                    photo_index: i + 1,
+                    photo_size_kb: (photos[i].size / 1024).toFixed(0),
+                    retry_count: retryCount,
+                    job_id: job.id,
+                    error: errorMsg
+                  }
+                });
               } else {
                 // Wait a bit before retrying
                 await new Promise(resolve => setTimeout(resolve, 1000));
@@ -513,6 +523,14 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         } catch (error) {
           console.error(`Failed to upload photo ${i + 1} (${photos[i]?.name || 'N/A'}):`, error);
           currentSubmissionErrors.push(`Photo ${i + 1} (${photos[i]?.name || 'N/A'}): ${error.message || 'Upload failed'}`);
+          base44.analytics.track({
+            eventName: 'pod_api_compressed_upload_failed',
+            properties: { 
+              photo_index: i + 1,
+              job_id: job.id,
+              error: error.message || 'Upload failed'
+            }
+          });
         }
       }
       setProcessingIndex(-1);
@@ -541,13 +559,25 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
       const existingPodFiles = job.podFiles || [];
       const allPodFiles = [...existingPodFiles, ...uploadedUrls];
 
-      await base44.entities.Job.update(job.id, {
-        ...job,
-        podFiles: allPodFiles,
-        podNotes: notes || job.podNotes,
-        status: 'DELIVERED',
-        driverStatus: 'COMPLETED'
-      });
+      try {
+        await base44.entities.Job.update(job.id, {
+          ...job,
+          podFiles: allPodFiles,
+          podNotes: notes || job.podNotes,
+          status: 'DELIVERED',
+          driverStatus: 'COMPLETED'
+        });
+      } catch (updateError) {
+        base44.analytics.track({
+          eventName: 'pod_api_job_update_failed',
+          properties: { 
+            job_id: job.id,
+            photo_count: allPodFiles.length,
+            error: updateError.message || String(updateError)
+          }
+        });
+        throw updateError;
+      }
 
       // Send notification - wrapped in its own try/catch so it doesn't affect main flow
       if (notes && notes.trim()) {
