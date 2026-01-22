@@ -493,9 +493,6 @@ export default function DashboardPage() {
 
 
 
-      {/* Recent Activity */}
-      <RecentActivityTile />
-
       {/* Quick Actions */}
       <div>
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
