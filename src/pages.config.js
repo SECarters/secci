@@ -6,6 +6,7 @@ import AdminPickupLocations from './pages/AdminPickupLocations';
 import AdminUsers from './pages/AdminUsers';
 import CustomerRequestDelivery from './pages/CustomerRequestDelivery';
 import DailyJobBoard from './pages/DailyJobBoard';
+import Dashboard from './pages/Dashboard';
 import DataExport from './pages/DataExport';
 import DriverMyRuns from './pages/DriverMyRuns';
 import Home from './pages/Home';
@@ -15,7 +16,6 @@ import SchedulingBoard from './pages/SchedulingBoard';
 import SheetSpecs from './pages/SheetSpecs';
 import TestEmails from './pages/TestEmails';
 import WeatherToday from './pages/WeatherToday';
-import Dashboard from './pages/Dashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -28,6 +28,7 @@ export const PAGES = {
     "AdminUsers": AdminUsers,
     "CustomerRequestDelivery": CustomerRequestDelivery,
     "DailyJobBoard": DailyJobBoard,
+    "Dashboard": Dashboard,
     "DataExport": DataExport,
     "DriverMyRuns": DriverMyRuns,
     "Home": Home,
@@ -37,7 +38,6 @@ export const PAGES = {
     "SheetSpecs": SheetSpecs,
     "TestEmails": TestEmails,
     "WeatherToday": WeatherToday,
-    "Dashboard": Dashboard,
 }
 
 export const pagesConfig = {

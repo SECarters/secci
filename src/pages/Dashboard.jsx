@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Package, Truck, TrendingUp, Cloud, Droplets, Clock as ClockIcon, AlertTriangle, CalendarRange } from 'lucide-react';
 import { format, startOfDay, startOfWeek, addDays } from 'date-fns';
 import { createPageUrl } from '@/utils';
-import RecentActivityTile from '../components/scheduling/RecentActivityTile';
+
 
 export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
