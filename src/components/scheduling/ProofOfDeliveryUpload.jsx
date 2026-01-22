@@ -759,6 +759,7 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
                         type="file"
                         accept="image/*"
                         capture="environment"
+                        multiple
                         onChange={handleFileChange}
                         className="hidden"
                         disabled={uploading}
