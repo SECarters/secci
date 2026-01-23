@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Clock, User, Calendar, Truck, Edit, Plus, Trash } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { format } from 'date-fns';
+import { format, formatInTimeZone } from 'date-fns-tz';
 
 export default function JobActivityLog({ jobId }) {
   const [activities, setActivities] = useState([]);
@@ -203,7 +203,7 @@ export default function JobActivityLog({ jobId }) {
                     <span>•</span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {format(new Date(activity.timestamp), 'MMM d, yyyy h:mm a')}
+                      {formatInTimeZone(new Date(activity.timestamp), Intl.DateTimeFormat().resolvedOptions().timeZone, 'MMM d, yyyy h:mm a')}
                     </span>
                   </div>
                 </div>
