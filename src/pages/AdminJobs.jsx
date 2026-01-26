@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { Search, Filter, X, AlertTriangle, Paperclip } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
+import AdvancedJobFilters from '../components/jobs/AdvancedJobFilters';
 import { base44 } from '@/api/base44Client';
 
 export default function AdminJobsPage() {
@@ -21,9 +22,15 @@ export default function AdminJobsPage() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterBy, setFilterBy] = useState('all');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [showOnlyWithAttachments, setShowOnlyWithAttachments] = useState(false);
+  const [filters, setFilters] = useState({
+    status: 'all',
+    deliveryType: 'all',
+    dateFrom: null,
+    dateTo: null,
+    truck: 'all',
+    sortBy: 'created_date',
+    sortOrder: 'desc'
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,18 +89,24 @@ export default function AdminJobsPage() {
   useEffect(() => {
     let result = [...jobs];
 
+    // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(job => {
         const assignment = assignments.find(a => a.jobId === job.id);
         const searchableFields = [
+          job.id,
           job.customerName,
           job.deliveryLocation,
+          job.deliverySuburb,
+          job.deliveryStreetNumber,
+          job.deliveryStreetName,
           job.deliveryTypeName,
           job.pickupLocation,
           job.siteContactName,
           job.siteContactPhone,
           job.poSalesDocketNumber,
+          job.orderNumber,
           job.deliveryNotes,
           job.status,
           assignment?.truckId || '',
@@ -104,77 +117,74 @@ export default function AdminJobsPage() {
       });
     }
 
-    if (showOnlyWithAttachments) {
-      result = result.filter(job => job.attachments && job.attachments.length > 0);
+    // Status filter
+    if (filters.status !== 'all') {
+      result = result.filter(job => job.status === filters.status);
     }
 
-    if (filterBy !== 'all') {
-      result = result.sort((a, b) => {
-        let compareA, compareB;
-
-        switch (filterBy) {
-          case 'customer':
-            compareA = a.customerName || '';
-            compareB = b.customerName || '';
-            break;
-          case 'deliveryLocation':
-            compareA = a.deliveryLocation || '';
-            compareB = b.deliveryLocation || '';
-            break;
-          case 'requestedDate':
-            compareA = new Date(a.requestedDate).getTime();
-            compareB = new Date(b.requestedDate).getTime();
-            break;
-          case 'scheduledDate':
-            const assignmentA = assignments.find(asn => asn.jobId === a.id);
-            const assignmentB = assignments.find(asn => asn.jobId === b.id);
-            compareA = assignmentA ? new Date(assignmentA.date).getTime() : 0;
-            compareB = assignmentB ? new Date(assignmentB.date).getTime() : 0;
-            break;
-          case 'deliveryWindow':
-            compareA = a.deliveryWindow || '';
-            compareB = b.deliveryWindow || '';
-            break;
-          case 'assignedTruck':
-            const truckA = assignments.find(asn => asn.jobId === a.id)?.truckId || '';
-            const truckB = assignments.find(asn => asn.jobId === b.id)?.truckId || '';
-            compareA = truckA;
-            compareB = truckB;
-            break;
-          case 'status':
-            compareA = a.status || '';
-            compareB = b.status || '';
-            break;
-          default:
-            compareA = a.created_date;
-            compareB = b.created_date;
-        }
-
-        if (typeof compareA === 'string') {
-          if (sortOrder === 'asc') {
-            return compareA.localeCompare(compareB);
-          } else {
-            return compareB.localeCompare(compareA);
-          }
-        } else {
-          if (sortOrder === 'asc') {
-            return compareA - compareB;
-          } else {
-            return compareB - compareA;
-          }
-        }
-      });
+    // Delivery type filter
+    if (filters.deliveryType !== 'all') {
+      result = result.filter(job => job.deliveryTypeId === filters.deliveryType);
     }
+
+    // Date range filter
+    if (filters.dateFrom) {
+      result = result.filter(job => job.requestedDate >= filters.dateFrom);
+    }
+    if (filters.dateTo) {
+      result = result.filter(job => job.requestedDate <= filters.dateTo);
+    }
+
+    // Truck filter
+    if (filters.truck !== 'all') {
+      if (filters.truck === 'UNASSIGNED') {
+        result = result.filter(job => !assignments.find(a => a.jobId === job.id));
+      } else {
+        result = result.filter(job => {
+          const assignment = assignments.find(a => a.jobId === job.id);
+          return assignment?.truckId === filters.truck;
+        });
+      }
+    }
+
+    // Sorting
+    result = result.sort((a, b) => {
+      let compareA, compareB;
+
+      switch (filters.sortBy) {
+        case 'customerName':
+          compareA = a.customerName || '';
+          compareB = b.customerName || '';
+          break;
+        case 'deliveryLocation':
+          compareA = a.deliverySuburb || a.deliveryLocation || '';
+          compareB = b.deliverySuburb || b.deliveryLocation || '';
+          break;
+        case 'requestedDate':
+          compareA = new Date(a.requestedDate).getTime();
+          compareB = new Date(b.requestedDate).getTime();
+          break;
+        case 'status':
+          compareA = a.status || '';
+          compareB = b.status || '';
+          break;
+        case 'created_date':
+        default:
+          compareA = new Date(a.created_date).getTime();
+          compareB = new Date(b.created_date).getTime();
+      }
+
+      if (typeof compareA === 'string') {
+        return filters.sortOrder === 'asc' ? compareA.localeCompare(compareB) : compareB.localeCompare(compareA);
+      } else {
+        return filters.sortOrder === 'asc' ? compareA - compareB : compareB - compareA;
+      }
+    });
 
     setFilteredJobs(result);
-  }, [searchQuery, filterBy, sortOrder, showOnlyWithAttachments, jobs, assignments]);
+  }, [searchQuery, filters, jobs, assignments]);
 
-  const handleClearFilters = () => {
-    setSearchQuery('');
-    setFilterBy('all');
-    setSortOrder('desc');
-    setShowOnlyWithAttachments(false);
-  };
+
 
   const getAssignmentForJob = (jobId) => {
     return assignments.find(a => a.jobId === jobId);
@@ -222,8 +232,6 @@ export default function AdminJobsPage() {
   const pageDescription = isCustomer 
     ? 'View all your delivery requests and their current status' 
     : 'A complete history of all delivery jobs';
-
-  const hasActiveFilters = searchQuery.trim() || filterBy !== 'all' || showOnlyWithAttachments;
 
   // Helper function to get colors and icon for delivery type
   const getDeliveryTypeStyles = (deliveryType, isDifficult) => {
@@ -285,106 +293,21 @@ export default function AdminJobsPage() {
           <p className="text-gray-600 mt-1">{pageDescription}</p>
         </div>
 
-        {/* Search and Filter Bar */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Search Bar */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search jobs by customer, location, contact, docket, or notes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+        {/* Advanced Filters */}
+        <AdvancedJobFilters
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          filters={filters}
+          onFiltersChange={setFilters}
+          deliveryTypes={deliveryTypes}
+          currentUser={currentUser}
+        />
 
-              {/* Filter By Dropdown */}
-              <div className="flex gap-2">
-                {(currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher') && (
-                  <Button
-                    variant={showOnlyWithAttachments ? 'default' : 'outline'}
-                    onClick={() => setShowOnlyWithAttachments(!showOnlyWithAttachments)}
-                    className="gap-2"
-                  >
-                    <Paperclip className="h-4 w-4" />
-                    With Attachments
-                  </Button>
-                )}
-                <div className="w-48">
-                  <Select value={filterBy} onValueChange={setFilterBy}>
-                    <SelectTrigger>
-                      <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4" />
-                        <SelectValue placeholder="Filter by..." />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All (No Filter)</SelectItem>
-                      <SelectItem value="customer">Customer</SelectItem>
-                      <SelectItem value="deliveryLocation">Delivery Location</SelectItem>
-                      <SelectItem value="requestedDate">Requested Date</SelectItem>
-                      <SelectItem value="scheduledDate">Scheduled Date</SelectItem>
-                      <SelectItem value="deliveryWindow">Delivery Window</SelectItem>
-                      <SelectItem value="assignedTruck">Assigned Truck</SelectItem>
-                      <SelectItem value="status">Status</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Sort Order Toggle */}
-                {filterBy !== 'all' && (
-                  <Select value={sortOrder} onValueChange={setSortOrder}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="asc">A → Z / Old → New</SelectItem>
-                      <SelectItem value="desc">Z → A / New → Old</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-
-                {/* Clear Filters Button */}
-                {hasActiveFilters && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleClearFilters}
-                    title="Clear all filters"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Active Filter Indicator */}
-            {hasActiveFilters && (
-              <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
-                <span className="font-medium">Active filters:</span>
-                {searchQuery && (
-                  <Badge variant="outline" className="gap-1">
-                    Search: "{searchQuery}"
-                  </Badge>
-                )}
-                {filterBy !== 'all' && (
-                  <Badge variant="outline" className="gap-1">
-                    Sort by: {filterBy.replace(/([A-Z])/g, ' $1').trim()}
-                  </Badge>
-                )}
-                {showOnlyWithAttachments && (
-                  <Badge variant="outline" className="gap-1">
-                    <Paperclip className="h-3 w-3" />
-                    With Attachments
-                  </Badge>
-                )}
-                <span className="text-gray-500">({filteredJobs.length} {filteredJobs.length === 1 ? 'result' : 'results'})</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {filteredJobs.length > 0 && (
+          <div className="text-sm text-gray-600">
+            Showing <span className="font-semibold">{filteredJobs.length}</span> {filteredJobs.length === 1 ? 'job' : 'jobs'}
+          </div>
+        )}
 
         <Card>
           <CardContent className="p-0">
