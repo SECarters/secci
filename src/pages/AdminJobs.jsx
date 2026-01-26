@@ -28,7 +28,7 @@ export default function AdminJobsPage() {
     dateFrom: null,
     dateTo: null,
     truck: 'all',
-    sortBy: 'created_date',
+    sortBy: 'requestedDate',
     sortOrder: 'desc'
   });
 
