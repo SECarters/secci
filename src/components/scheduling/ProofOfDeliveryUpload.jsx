@@ -318,7 +318,13 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
               
               console.log(`Attempt ${retryCount + 1} - Uploading photo ${i + 1}:`, photo.name, photo.type, (photo.size / 1024).toFixed(0) + 'KB');
               
-              const result = await base44.integrations.Core.UploadFile({ file: photo });
+              // Add timeout to the upload request
+              const uploadPromise = base44.integrations.Core.UploadFile({ file: photo });
+              const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Upload timeout - server took too long to respond')), 60000)
+              );
+              
+              const result = await Promise.race([uploadPromise, timeoutPromise]);
               
               if (!result || !result.file_url) {
                 throw new Error('Upload returned no URL');
@@ -348,8 +354,10 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
                   }
                 });
               } else {
-                // Wait a bit before retrying
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Wait progressively longer before retrying (1s, 2s)
+                const waitTime = retryCount * 1000;
+                console.log(`Waiting ${waitTime}ms before retry...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
               }
             }
           }
@@ -515,14 +523,34 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
           const fileName = originalFile?.name || `pod-${job.id}-${Date.now()}-${i + 1}.jpg`;
           const fileToUpload = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
           
-          const result = await base44.integrations.Core.UploadFile({ file: fileToUpload });
+          // Add timeout to prevent hanging uploads
+          const uploadPromise = base44.integrations.Core.UploadFile({ file: fileToUpload });
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Upload timeout - server took too long to respond')), 60000)
+          );
+          
+          const result = await Promise.race([uploadPromise, timeoutPromise]);
+          
+          if (!result || !result.file_url) {
+            throw new Error('Upload returned no URL');
+          }
+          
           uploadedUrls.push(result.file_url);
 
           const progress = 50 + ((i + 1) / compressedPhotosDataURLs.length) * 50;
           setUploadProgress(Math.round(progress));
         } catch (error) {
           console.error(`Failed to upload photo ${i + 1} (${photos[i]?.name || 'N/A'}):`, error);
-          currentSubmissionErrors.push(`Photo ${i + 1} (${photos[i]?.name || 'N/A'}): ${error.message || 'Upload failed'}`);
+          
+          // Provide more helpful error messages
+          let errorMsg = error.message || 'Upload failed';
+          if (errorMsg.includes('timeout')) {
+            errorMsg = 'Upload timeout - try using fewer photos or check your connection';
+          } else if (errorMsg.includes('Network') || errorMsg.includes('fetch')) {
+            errorMsg = 'Network error - check your internet connection';
+          }
+          
+          currentSubmissionErrors.push(`Photo ${i + 1} (${photos[i]?.name || 'N/A'}): ${errorMsg}`);
           base44.analytics.track({
             eventName: 'pod_api_compressed_upload_failed',
             properties: { 
