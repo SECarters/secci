@@ -16,7 +16,11 @@ import {
   BarChart3,
   PieChart as PieChartIcon,
   AlertTriangle,
-  FileCheck
+  FileCheck,
+  Target,
+  Gauge,
+  Users,
+  MapPin
 } from 'lucide-react';
 import { format, subDays, startOfMonth, endOfMonth, parseISO, differenceInDays, startOfWeek, endOfWeek, eachWeekOfInterval } from 'date-fns';
 import { 
@@ -61,7 +65,11 @@ export default function ReportsPage() {
     completedJobs: 0,
     totalSqm: 0,
     podUploadRate: 0,
-    difficultDeliveries: 0
+    difficultDeliveries: 0,
+    onTimeDeliveryRate: 0,
+    avgDeliveryTime: 0,
+    completionRate: 0,
+    avgJobsPerTruck: 0
   });
   
   const [chartData, setChartData] = useState({
@@ -69,7 +77,12 @@ export default function ReportsPage() {
     customerActivity: [],
     sqmLeaderboard: [],
     truckPerformance: [],
-    statusBreakdown: []
+    statusBreakdown: [],
+    driverPerformance: [],
+    completionByType: [],
+    completionByRegion: [],
+    deliveryTimeDistribution: [],
+    vehicleUtilization: []
   });
 
   useEffect(() => {
@@ -179,12 +192,47 @@ export default function ReportsPage() {
     const jobsWithPOD = filteredJobs.filter(j => j.podFiles && j.podFiles.length > 0).length;
     const podUploadRate = totalJobs > 0 ? (jobsWithPOD / totalJobs) * 100 : 0;
 
+    // On-Time Delivery Rate
+    const scheduledJobs = filteredJobs.filter(j => j.requestedDate && j.status === 'DELIVERED');
+    const onTimeJobs = scheduledJobs.filter(job => {
+      const assignment = allAssignments.find(a => a.jobId === job.id);
+      if (!assignment) return false;
+      return assignment.date <= job.requestedDate;
+    });
+    const onTimeDeliveryRate = scheduledJobs.length > 0 ? (onTimeJobs.length / scheduledJobs.length) * 100 : 0;
+
+    // Average Delivery Time (days from creation to delivery)
+    const deliveredJobs = filteredJobs.filter(j => j.status === 'DELIVERED' && j.created_date);
+    let totalDeliveryDays = 0;
+    deliveredJobs.forEach(job => {
+      const assignment = allAssignments.find(a => a.jobId === job.id);
+      if (assignment && assignment.date) {
+        const daysDiff = differenceInDays(parseISO(assignment.date), parseISO(job.created_date));
+        totalDeliveryDays += Math.max(0, daysDiff);
+      }
+    });
+    const avgDeliveryTime = deliveredJobs.length > 0 ? totalDeliveryDays / deliveredJobs.length : 0;
+
+    // Completion Rate
+    const completionRate = totalJobs > 0 ? (completedJobs / totalJobs) * 100 : 0;
+
+    // Average Jobs Per Truck
+    const trucksUsed = new Set(allAssignments.filter(a => {
+      const job = filteredJobs.find(j => j.id === a.jobId);
+      return job && a.date >= startDate && a.date <= endDate;
+    }).map(a => a.truckId));
+    const avgJobsPerTruck = trucksUsed.size > 0 ? totalJobs / trucksUsed.size : 0;
+
     setKpis({
       totalJobs,
       completedJobs,
       totalSqm: Math.round(totalSqm),
       podUploadRate: Math.round(podUploadRate),
-      difficultDeliveries
+      difficultDeliveries,
+      onTimeDeliveryRate: Math.round(onTimeDeliveryRate),
+      avgDeliveryTime: avgDeliveryTime.toFixed(1),
+      completionRate: Math.round(completionRate),
+      avgJobsPerTruck: avgJobsPerTruck.toFixed(1)
     });
 
     // SQM Trends - Week by Week
@@ -278,12 +326,123 @@ export default function ReportsPage() {
       value 
     }));
 
+    // Driver Performance (by assignments with completed jobs)
+    const jobsByDriver = {};
+    allAssignments.forEach(assignment => {
+      const job = filteredJobs.find(j => j.id === assignment.jobId);
+      if (job && assignment.date >= startDate && assignment.date <= endDate) {
+        if (!jobsByDriver[assignment.truckId]) {
+          jobsByDriver[assignment.truckId] = { total: 0, completed: 0, onTime: 0 };
+        }
+        jobsByDriver[assignment.truckId].total += 1;
+        if (job.status === 'DELIVERED') {
+          jobsByDriver[assignment.truckId].completed += 1;
+          if (assignment.date <= job.requestedDate) {
+            jobsByDriver[assignment.truckId].onTime += 1;
+          }
+        }
+      }
+    });
+
+    const driverPerformance = Object.entries(jobsByDriver).map(([name, stats]) => ({
+      name,
+      total: stats.total,
+      completed: stats.completed,
+      completionRate: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
+      onTimeRate: stats.completed > 0 ? Math.round((stats.onTime / stats.completed) * 100) : 0
+    })).sort((a, b) => b.completionRate - a.completionRate);
+
+    // Completion Rate by Delivery Type
+    const jobsByDeliveryType = {};
+    filteredJobs.forEach(job => {
+      const typeName = job.deliveryTypeName || 'Unknown';
+      if (!jobsByDeliveryType[typeName]) {
+        jobsByDeliveryType[typeName] = { total: 0, completed: 0 };
+      }
+      jobsByDeliveryType[typeName].total += 1;
+      if (job.status === 'DELIVERED') {
+        jobsByDeliveryType[typeName].completed += 1;
+      }
+    });
+
+    const completionByType = Object.entries(jobsByDeliveryType).map(([name, stats]) => ({
+      name,
+      total: stats.total,
+      completed: stats.completed,
+      rate: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0
+    })).sort((a, b) => b.total - a.total);
+
+    // Completion Rate by Region (suburb)
+    const jobsByRegion = {};
+    filteredJobs.forEach(job => {
+      const region = job.deliverySuburb || 'Unknown';
+      if (!jobsByRegion[region]) {
+        jobsByRegion[region] = { total: 0, completed: 0 };
+      }
+      jobsByRegion[region].total += 1;
+      if (job.status === 'DELIVERED') {
+        jobsByRegion[region].completed += 1;
+      }
+    });
+
+    const completionByRegion = Object.entries(jobsByRegion)
+      .map(([name, stats]) => ({
+        name,
+        total: stats.total,
+        completed: stats.completed,
+        rate: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10);
+
+    // Delivery Time Distribution (in days)
+    const deliveryTimeBuckets = { '0-1': 0, '2-3': 0, '4-7': 0, '8-14': 0, '15+': 0 };
+    deliveredJobs.forEach(job => {
+      const assignment = allAssignments.find(a => a.jobId === job.id);
+      if (assignment && assignment.date) {
+        const days = differenceInDays(parseISO(assignment.date), parseISO(job.created_date));
+        if (days <= 1) deliveryTimeBuckets['0-1'] += 1;
+        else if (days <= 3) deliveryTimeBuckets['2-3'] += 1;
+        else if (days <= 7) deliveryTimeBuckets['4-7'] += 1;
+        else if (days <= 14) deliveryTimeBuckets['8-14'] += 1;
+        else deliveryTimeBuckets['15+'] += 1;
+      }
+    });
+
+    const deliveryTimeDistribution = Object.entries(deliveryTimeBuckets).map(([range, count]) => ({
+      range: `${range} days`,
+      count
+    }));
+
+    // Vehicle Utilization (jobs per truck per day in date range)
+    const dateRangeDays = differenceInDays(parseISO(endDate), parseISO(startDate)) + 1;
+    const vehicleUtilization = TRUCKS.slice(1).map(truck => {
+      const truckJobs = allAssignments.filter(a => {
+        const job = filteredJobs.find(j => j.id === a.jobId);
+        return job && a.truckId === truck && a.date >= startDate && a.date <= endDate;
+      });
+      const avgJobsPerDay = dateRangeDays > 0 ? truckJobs.length / dateRangeDays : 0;
+      const utilizationRate = Math.min(100, Math.round((avgJobsPerDay / 4) * 100)); // Assuming 4 jobs/day is 100%
+      
+      return {
+        name: truck,
+        jobs: truckJobs.length,
+        avgPerDay: avgJobsPerDay.toFixed(1),
+        utilization: utilizationRate
+      };
+    }).sort((a, b) => b.utilization - a.utilization);
+
     setChartData(prev => ({
       ...prev,
       customerActivity,
       sqmLeaderboard,
       truckPerformance,
-      statusBreakdown
+      statusBreakdown,
+      driverPerformance,
+      completionByType,
+      completionByRegion,
+      deliveryTimeDistribution,
+      vehicleUtilization
     }));
   };
 
@@ -472,7 +631,7 @@ ${chartData.truckPerformance.map(t => `${t.name}: ${t.jobs} jobs`).join('\n')}
       </Card>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -489,10 +648,19 @@ ${chartData.truckPerformance.map(t => `${t.name}: ${t.jobs} jobs`).join('\n')}
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{kpis.completedJobs}</p>
+                <p className="text-sm text-gray-600">Completion Rate</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-2xl font-bold text-gray-900">{kpis.completionRate}%</p>
+                  {kpis.completionRate >= 90 ? (
+                    <TrendingUp className="h-5 w-5 text-green-600" />
+                  ) : kpis.completionRate >= 70 ? (
+                    <TrendingUp className="h-5 w-5 text-yellow-600" />
+                  ) : (
+                    <TrendingDown className="h-5 w-5 text-red-600" />
+                  )}
+                </div>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
+              <Target className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
@@ -501,10 +669,56 @@ ${chartData.truckPerformance.map(t => `${t.name}: ${t.jobs} jobs`).join('\n')}
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-sm text-gray-600">On-Time Delivery</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-2xl font-bold text-gray-900">{kpis.onTimeDeliveryRate}%</p>
+                  {kpis.onTimeDeliveryRate >= 85 ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <Clock className="h-5 w-5 text-orange-600" />
+                  )}
+                </div>
+              </div>
+              <Clock className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Avg Delivery Time</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{kpis.avgDeliveryTime} days</p>
+              </div>
+              <Calendar className="h-8 w-8 text-indigo-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Secondary KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
                 <p className="text-sm text-gray-600">Total SQM</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">{kpis.totalSqm.toLocaleString()}</p>
               </div>
               <BarChart3 className="h-8 w-8 text-indigo-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Avg Jobs/Truck</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{kpis.avgJobsPerTruck}</p>
+              </div>
+              <Gauge className="h-8 w-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
@@ -525,7 +739,7 @@ ${chartData.truckPerformance.map(t => `${t.name}: ${t.jobs} jobs`).join('\n')}
                   )}
                 </div>
               </div>
-              <FileCheck className="h-8 w-8 text-purple-600" />
+              <FileCheck className="h-8 w-8 text-teal-600" />
             </div>
           </CardContent>
         </Card>
@@ -653,6 +867,175 @@ ${chartData.truckPerformance.map(t => `${t.name}: ${t.jobs} jobs`).join('\n')}
               </div>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Driver/Truck Performance Metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-blue-600" />
+              Driver Performance Metrics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {chartData.driverPerformance.map((driver) => (
+                <div key={driver.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{driver.name}</p>
+                    <p className="text-sm text-gray-600">
+                      {driver.completed}/{driver.total} completed
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">Completion</p>
+                      <p className="font-bold text-green-600">{driver.completionRate}%</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">On-Time</p>
+                      <p className="font-bold text-blue-600">{driver.onTimeRate}%</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Gauge className="h-5 w-5 text-purple-600" />
+              Vehicle Utilization
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData.vehicleUtilization}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip 
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                          <p className="font-medium">{data.name}</p>
+                          <p className="text-sm text-gray-600">Total Jobs: {data.jobs}</p>
+                          <p className="text-sm text-gray-600">Avg/Day: {data.avgPerDay}</p>
+                          <p className="text-sm text-purple-600 font-medium">Utilization: {data.utilization}%</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="utilization" fill="#8b5cf6" name="Utilization %" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Completion Rates */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-orange-600" />
+              Completion Rate by Delivery Type
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData.completionByType}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+                <YAxis />
+                <Tooltip 
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                          <p className="font-medium">{data.name}</p>
+                          <p className="text-sm text-gray-600">Total: {data.total}</p>
+                          <p className="text-sm text-gray-600">Completed: {data.completed}</p>
+                          <p className="text-sm text-green-600 font-medium">Rate: {data.rate}%</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="rate" fill="#f59e0b" name="Completion Rate %" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-red-600" />
+              Top 10 Regions by Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData.completionByRegion}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+                <YAxis />
+                <Tooltip 
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                          <p className="font-medium">{data.name}</p>
+                          <p className="text-sm text-gray-600">Total: {data.total}</p>
+                          <p className="text-sm text-gray-600">Completed: {data.completed}</p>
+                          <p className="text-sm text-green-600 font-medium">Rate: {data.rate}%</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="total" fill="#ef4444" name="Total Jobs" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Delivery Time Distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-blue-600" />
+            Delivery Time Distribution
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData.deliveryTimeDistribution}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="range" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="count" fill="#3b82f6" name="Number of Jobs" />
+            </BarChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
     </div>
