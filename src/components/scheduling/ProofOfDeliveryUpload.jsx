@@ -367,12 +367,13 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         if (directUploadUrls.length === 0) {
           console.error('All direct uploads failed. Errors:', directUploadErrors);
           setErrors(directUploadErrors);
+          const totalUploadSize = photos.reduce((sum, p) => sum + (p?.size || 0), 0);
           base44.analytics.track({
             eventName: 'pod_direct_upload_failed',
             properties: { 
               photo_count: photos.length, 
               job_id: job.id,
-              total_size_mb: (totalSize / 1024 / 1024).toFixed(2)
+              total_size_mb: (totalUploadSize / 1024 / 1024).toFixed(2)
             }
           });
           throw new Error(`Unable to upload any photos. Please check your internet connection and try again with fewer or smaller photos. If the issue persists, try taking new photos.`);
