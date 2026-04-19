@@ -31,7 +31,6 @@ import {
   BarChart3
 } from 'lucide-react';
 
-import { OfflineProvider } from './components/offline/OfflineManager';
 import ReturnedJobAlert from './components/scheduling/ReturnedJobAlert';
 
 const NavLink = ({ to, icon: Icon, children, collapsed, onClick }) => {
@@ -475,13 +474,11 @@ export default function Layout({ children, currentPageName }) {
 
   if (isPending && currentPageName === 'AccessPending') {
     return (
-      <OfflineProvider>
-        <div className="min-h-screen w-full bg-gray-50 overflow-auto">
-          <main className="p-6">
-            {children}
-          </main>
-        </div>
-      </OfflineProvider>
+      <div className="min-h-screen w-full bg-gray-50 overflow-auto">
+        <main className="p-6">
+          {children}
+        </main>
+      </div>
     );
   }
 
@@ -505,7 +502,7 @@ export default function Layout({ children, currentPageName }) {
   const mainMargin = sidebarCollapsed ? 'md:ml-16' : 'md:ml-64';
 
   return (
-    <OfflineProvider>
+    <>
       <style>{`
         html, body, #root {
           height: 100%;
@@ -693,6 +690,6 @@ export default function Layout({ children, currentPageName }) {
           }}
         />
       )}
-    </OfflineProvider>
+    </>
   );
 }

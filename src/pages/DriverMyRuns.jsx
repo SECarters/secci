@@ -12,7 +12,13 @@ import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
 import { useToast } from '@/components/ui/use-toast';
 import { updateJobStatus } from '@/functions/updateJobStatus';
-import { useOffline } from '../components/offline/OfflineManager';
+const useOffline = () => ({
+  isOnline: navigator.onLine,
+  cacheJobs: async () => {},
+  cacheAssignments: async () => {},
+  getCachedJobs: async () => [],
+  getCachedAssignments: async () => [],
+});
 import { getJobCardStyles } from '../components/scheduling/DeliveryTypeColorUtils';
 import DeliveryTypeLegend from '../components/scheduling/DeliveryTypeLegend';
 import { useQuery } from '@tanstack/react-query';
