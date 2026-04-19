@@ -116,9 +116,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error handling job status change:', error);
-    return Response.json({ 
-      error: 'Internal server error', 
-      details: error.message 
-    }, { status: 500 });
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

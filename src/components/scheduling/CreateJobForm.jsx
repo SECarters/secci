@@ -9,7 +9,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Upload, Loader2, X, Plus, Trash2, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
-import { extractDeliveryData } from '@/functions/extractDeliveryData';
 import AddressInput from './AddressInput';
 
 
@@ -354,14 +353,43 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       
       setAttachments(prev => [...prev, fileUrl]);
 
-      const response = await extractDeliveryData({ fileUrl });
-      console.log('Extraction response:', response);
-      
-      // Handle both response.data and direct response formats
-      const responseData = response.data || response;
-      
-      if (responseData?.success && responseData?.data) {
-        const extracted = responseData.data;
+      const extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url: fileUrl,
+        json_schema: {
+          type: "object",
+          properties: {
+            customer_name: { type: "string" },
+            customer_reference: { type: "string" },
+            delivery_address: { type: "string" },
+            order_number: { type: "string" },
+            supplier_name: { type: "string" },
+            shipping_date: { type: "string" },
+            site_contact: { type: "string" },
+            site_contact_phone: { type: "string" },
+            total_m2: { type: "number" },
+            total_weight: { type: "number" },
+            total_sheets: { type: "number" },
+            delivery_notes: { type: "string" },
+            line_items: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  product_code: { type: "string" },
+                  product_description: { type: "string" },
+                  quantity: { type: "number" },
+                  unit: { type: "string" },
+                  m2: { type: "number" },
+                  weight: { type: "number" }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (extractResult?.status === 'success' && extractResult?.output) {
+        const extracted = extractResult.output;
         setExtractedData(extracted);
 
         const updates = {};
@@ -484,7 +512,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         });
       }
     } catch (error) {
-      console.error('Document extraction error:', error);
       toast({
         title: "Extraction Failed",
         description: "Failed to extract data from document. Please fill the form manually.",
@@ -1331,17 +1358,34 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       </Dialog>
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="sm:max-w-[700px]">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="text-lg">Confirm Job Details</DialogTitle>
           </DialogHeader>
-          <p>Review and confirm job details before creating.</p>
+          <div className="space-y-2 py-2 text-sm">
+            {[
+              { label: 'Customer', value: customers.find(c => c.id === formData.customerId)?.customerName },
+              { label: 'Delivery Type', value: deliveryTypes.find(t => t.id === formData.deliveryTypeId)?.name },
+              { label: 'Pickup Location', value: pickupLocations.find(l => l.id === formData.pickupLocationId) ? `${pickupLocations.find(l => l.id === formData.pickupLocationId).company} - ${pickupLocations.find(l => l.id === formData.pickupLocationId).name}` : '' },
+              { label: 'Delivery Address', value: formData.deliveryLocation },
+              { label: 'Requested Date', value: formData.requestedDate },
+              { label: 'Delivery Window', value: formData.deliveryWindow || 'Not specified' },
+              { label: 'Site Contact', value: formData.siteContactName ? `${formData.siteContactName} — ${formData.siteContactPhone}` : 'Not provided' },
+              { label: 'Docket/PO', value: formData.poSalesDocketNumber || 'Not provided' },
+              { label: 'Notes', value: formData.deliveryNotes || 'None' },
+            ].map(({ label, value }) => value ? (
+              <div key={label} className="flex gap-2">
+                <span className="font-medium text-gray-600 w-36 shrink-0">{label}:</span>
+                <span className="text-gray-900">{value}</span>
+              </div>
+            ) : null)}
+          </div>
           <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={() => setShowConfirmation(false)} disabled={loading}>
               Go Back
             </Button>
             <Button type="button" onClick={handleConfirmSubmit} disabled={loading}>
-              {loading ? 'Creating...' : 'Confirm & Create Job'}
+              {loading ? 'Creating...' : 'Confirm & Submit'}
             </Button>
           </DialogFooter>
         </DialogContent>

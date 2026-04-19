@@ -3,6 +3,8 @@ import { Resend } from 'npm:resend@4.0.0';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
+const esc = (s) => s ? String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : '';
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -10,6 +12,9 @@ Deno.serve(async (req) => {
 
         if (!user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        if (user.role !== 'admin' && !['dispatcher', 'driver', 'manager'].includes(user.appRole)) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         const body = await req.json();
@@ -48,16 +53,16 @@ Deno.serve(async (req) => {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>✓ Delivery Completed</h1>
+                        <h1>&#10003; Delivery Completed</h1>
                     </div>
                     <div class="content">
-                        <p>Hi ${customer.customerName},</p>
+                        <p>Hi ${esc(customer.customerName)},</p>
                         <p><span class="success-badge">Delivery Complete</span></p>
                         <p>Your delivery has been successfully completed, and proof of delivery photos are available for viewing on SECCI. Here are the details:</p>
                         
                         <div class="detail-row">
                             <span class="label">Delivery Location:</span>
-                            <span class="value">${job.deliveryLocation}</span>
+                            <span class="value">${esc(job.deliveryLocation)}</span>
                         </div>
                         
                         <div class="detail-row">
@@ -68,7 +73,7 @@ Deno.serve(async (req) => {
                         ${job.podNotes ? `
                         <div class="detail-row">
                             <span class="label">Delivery Notes:</span>
-                            <span class="value">${job.podNotes}</span>
+                            <span class="value">${esc(job.podNotes)}</span>
                         </div>
                         ` : ''}
                         
@@ -90,13 +95,13 @@ Deno.serve(async (req) => {
         });
 
         if (error) {
-            console.error('Resend API error:', data);
-            return Response.json({ error: 'Failed to send email', details: error }, { status: 500 });
+            console.error('Resend API error:', error);
+            return Response.json({ error: 'Failed to send email' }, { status: 500 });
         }
 
         return Response.json({ success: true, messageId: data.id });
     } catch (error) {
         console.error('Error sending email:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: 'Failed to send email' }, { status: 500 });
     }
 });

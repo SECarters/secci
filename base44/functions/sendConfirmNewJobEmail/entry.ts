@@ -3,6 +3,8 @@ import { Resend } from 'npm:resend@4.0.0';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
+const esc = (s) => s ? String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : '';
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -10,6 +12,9 @@ Deno.serve(async (req) => {
 
         if (!user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        if (user.role !== 'admin' && !['dispatcher', 'driver', 'manager', 'customer'].includes(user.appRole)) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         const body = await req.json();
@@ -52,41 +57,41 @@ Deno.serve(async (req) => {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>✓ Job Created Successfully</h1>
+                        <h1>&#10003; Job Created Successfully</h1>
                     </div>
                     <div class="content">
-                        <p>Hi ${recipientName},</p>
+                        <p>Hi ${esc(recipientName)},</p>
                         <p><span class="success-badge">Job Submitted</span></p>
                         <p>Thank you for submitting the below delivery request with South East Carters. Our team will review the details and confirm availability shortly.</p>
                         
                         <div class="detail-row">
                             <span class="label">Customer:</span>
-                            <span class="value">${job.customerName}</span>
+                            <span class="value">${esc(job.customerName)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Delivery Type:</span>
-                            <span class="value">${job.deliveryTypeName}</span>
+                            <span class="value">${esc(job.deliveryTypeName)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Delivery Location:</span>
-                            <span class="value">${job.deliveryLocation}</span>
+                            <span class="value">${esc(job.deliveryLocation)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Requested Date:</span>
-                            <span class="value">${formattedDate}</span>
+                            <span class="value">${esc(formattedDate)}</span>
                         </div>
                         
                         ${job.deliveryWindow ? `
                         <div class="detail-row">
                             <span class="label">Preferred Window:</span>
-                            <span class="value">${job.deliveryWindow}</span>
+                            <span class="value">${esc(job.deliveryWindow)}</span>
                         </div>
                         ` : ''}
                         
-                        <p style="margin-top: 20px;">Please note: This email is an acknowledgment only — bookings are subject to confirmation and availability, and may be rescheduled or cancelled if required. We appreciate your patience and understanding, and we’ll be in touch soon with your confirmed booking details.</p>
+                        <p style="margin-top: 20px;">Please note: This email is an acknowledgment only — bookings are subject to confirmation and availability, and may be rescheduled or cancelled if required. We appreciate your patience and understanding, and we'll be in touch soon with your confirmed booking details.</p>
                     </div>
                     <div class="footer">
                         <p>All bookings are subject to availability and may be rescheduled or cancelled without prior notice. South East Carters accepts no liability for delays or damages arising from circumstances beyond our control. Additional fees may apply where extra time, resources, or special handling are required to complete the delivery.</p>
@@ -104,13 +109,13 @@ Deno.serve(async (req) => {
         });
 
         if (error) {
-            console.error('Resend API error:', data);
-            return Response.json({ error: 'Failed to send email', details: error }, { status: 500 });
+            console.error('Resend API error:', error);
+            return Response.json({ error: 'Failed to send email' }, { status: 500 });
         }
 
         return Response.json({ success: true, messageId: data.id });
     } catch (error) {
         console.error('Error sending email:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: 'Failed to send email' }, { status: 500 });
     }
 });

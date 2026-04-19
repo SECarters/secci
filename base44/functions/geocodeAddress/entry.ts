@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Geocode error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'Geocode request failed' }, { status: 500 });
   }
 });
 

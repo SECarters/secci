@@ -3,6 +3,8 @@ import { Resend } from 'npm:resend@4.0.0';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
+const esc = (s) => s ? String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : '';
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -10,6 +12,9 @@ Deno.serve(async (req) => {
 
         if (!user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        if (user.role !== 'admin' && !['dispatcher', 'manager'].includes(user.appRole)) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         const body = await req.json();
@@ -62,35 +67,35 @@ Deno.serve(async (req) => {
                         <h1>Delivery Scheduled</h1>
                     </div>
                     <div class="content">
-                        <p>Hi ${customerName},</p>
+                        <p>Hi ${esc(customerName)},</p>
                         <p>Your delivery has been scheduled. Here are the details:</p>
                         
                         <div class="detail-row">
                             <span class="label">Truck:</span>
-                            <span class="value">${truckName}</span>
+                            <span class="value">${esc(truckName)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Date:</span>
-                            <span class="value">${formattedDate}</span>
+                            <span class="value">${esc(formattedDate)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Time Window:</span>
-                            <span class="value">${timeSlotLabels[timeSlot] || timeSlot}</span>
+                            <span class="value">${esc(timeSlotLabels[timeSlot] || timeSlot)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Delivery Location:</span>
-                            <span class="value">${job.deliveryLocation}</span>
+                            <span class="value">${esc(job.deliveryLocation)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Site Contact:</span>
-                            <span class="value">${job.siteContactName || 'N/A'} - ${job.siteContactPhone || 'N/A'}</span>
+                            <span class="value">${esc(job.siteContactName) || 'N/A'} - ${esc(job.siteContactPhone) || 'N/A'}</span>
                         </div>
                         
-                        <p style="margin-top: 20px;">Please note: Delivery times may change due to operational factors. We’ll notify you promptly if adjustments are required. Thank you for choosing South East Carters — we appreciate your business.</p>
+                        <p style="margin-top: 20px;">Please note: Delivery times may change due to operational factors. We'll notify you promptly if adjustments are required. Thank you for choosing South East Carters — we appreciate your business.</p>
                     </div>
                     <div class="footer">
                         <p>Notice: All bookings are subject to availability and may be rescheduled or cancelled without prior notice. South East Carters accepts no liability for delays or damages arising from circumstances beyond our control. Additional fees may apply where extra time, resources, or special handling are required to complete the delivery.</p>
@@ -108,13 +113,13 @@ Deno.serve(async (req) => {
         });
 
         if (error) {
-            console.error('Resend API error:', data);
-            return Response.json({ error: 'Failed to send email', details: error }, { status: 500 });
+            console.error('Resend API error:', error);
+            return Response.json({ error: 'Failed to send email' }, { status: 500 });
         }
 
         return Response.json({ success: true, messageId: data.id });
     } catch (error) {
         console.error('Error sending email:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: 'Failed to send email' }, { status: 500 });
     }
 });

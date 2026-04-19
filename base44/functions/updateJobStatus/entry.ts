@@ -1,10 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+const DISPATCH_EMAIL = Deno.env.get('DISPATCH_EMAIL') || 'dispatch@secdelivery.com.au';
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         
-        // Verify user is authenticated — only drivers and admins can update driver status
         const user = await base44.auth.me();
         if (!user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -15,46 +16,42 @@ Deno.serve(async (req) => {
 
         const { jobId, driverStatus, problemDetails, etaMinutes, routeDistance, latitude, longitude } = await req.json();
 
-        // Validate required fields
         if (!jobId || !driverStatus) {
             return Response.json({ 
                 error: 'Missing required fields: jobId and driverStatus' 
             }, { status: 400 });
         }
 
-        // Get the current job
         const job = await base44.entities.Job.get(jobId);
         if (!job) {
             return Response.json({ error: 'Job not found' }, { status: 404 });
         }
 
-        // Update job with driver status
+        // Verify driver owns this job (job must be assigned to driver's truck)
+        if (user.role !== 'admin' && user.truck) {
+            const assignments = await base44.entities.Assignment.filter({ jobId });
+            const hasAssignment = assignments.some(a => a.truckId === user.truck);
+            if (!hasAssignment) {
+                return Response.json({ error: 'Forbidden: Job not assigned to your truck' }, { status: 403 });
+            }
+        }
+
         const updateData = {
             driverStatus,
             driverStatusUpdatedAt: new Date().toISOString(),
             driverStatusUpdatedBy: user.email
         };
 
-        if (problemDetails) {
-            updateData.problemDetails = problemDetails;
-        }
+        if (problemDetails) updateData.problemDetails = problemDetails;
+        if (etaMinutes !== undefined) updateData.etaMinutes = etaMinutes;
+        if (routeDistance !== undefined) updateData.routeDistance = routeDistance;
 
-        if (etaMinutes !== undefined) {
-            updateData.etaMinutes = etaMinutes;
-        }
-
-        if (routeDistance !== undefined) {
-            updateData.routeDistance = routeDistance;
-        }
-
-        // If driver has arrived or is unloading, mark navigation as started
         if (driverStatus === 'EN_ROUTE' || driverStatus === 'ARRIVED' || driverStatus === 'UNLOADING') {
             updateData.navigationStarted = true;
         }
 
         await base44.entities.Job.update(jobId, updateData);
 
-        // Also update location if provided
         if (latitude && longitude && user.truck) {
             await base44.entities.LocationUpdate.create({
                 userId: user.id,
@@ -68,12 +65,11 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Send notification to dispatch if there's a problem
         if (driverStatus === 'PROBLEM') {
             try {
                 await base44.asServiceRole.integrations.Core.SendEmail({
-                    to: 'dispatch@secdelivery.com.au',
-                    subject: `⚠️ Problem Reported: ${job.customerName}`,
+                    to: DISPATCH_EMAIL,
+                    subject: `Problem Reported: ${job.customerName}`,
                     body: `
                         <h2>Problem Reported by Driver</h2>
                         <p><strong>Driver:</strong> ${user.full_name}</p>
@@ -96,9 +92,6 @@ Deno.serve(async (req) => {
 
     } catch (error) {
         console.error('Job status update error:', error);
-        return Response.json({ 
-            error: 'Failed to update job status',
-            details: error.message 
-        }, { status: 500 });
+        return Response.json({ error: 'Failed to update job status' }, { status: 500 });
     }
 });

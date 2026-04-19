@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
         // Simply use the latest image from BOM
         const radarUrl = 'https://www.bom.gov.au/radar/IDR663.T.latest.png';
         
-        console.log('Fetching radar image from:', radarUrl);
+
         
         // Fetch the radar image
         const response = await fetch(radarUrl, {

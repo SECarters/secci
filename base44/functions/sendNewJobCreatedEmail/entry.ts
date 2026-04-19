@@ -3,6 +3,8 @@ import { Resend } from 'npm:resend@4.0.0';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
+const esc = (s) => s ? String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : '';
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -10,6 +12,9 @@ Deno.serve(async (req) => {
 
         if (!user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        if (user.role !== 'admin' && !['dispatcher', 'driver', 'manager', 'customer'].includes(user.appRole)) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         const body = await req.json();
@@ -24,10 +29,9 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Job not found' }, { status: 404 });
         }
 
-        // Get all dispatcher and admin users
-        const allUsers = await base44.asServiceRole.entities.User.list();
-        const dispatcherEmails = allUsers
-            .filter(u => u.role === 'admin' || u.appRole === 'dispatcher')
+        const allUsers = await base44.asServiceRole.entities.User.filter({ appRole: 'dispatcher' });
+        const adminUsers = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
+        const dispatcherEmails = [...allUsers, ...adminUsers]
             .map(u => u.email)
             .filter(email => email);
 
@@ -61,43 +65,43 @@ Deno.serve(async (req) => {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>🔔 New Job Created</h1>
+                        <h1>&#128276; New Job Created</h1>
                     </div>
                     <div class="content">
-                        <p><span class="badge">${job.status.replace(/_/g, ' ')}</span></p>
+                        <p><span class="badge">${esc(job.status.replace(/_/g, ' '))}</span></p>
                         <p>A new delivery job has been created and requires scheduling.</p>
                         
                         <div class="detail-row">
                             <span class="label">Customer:</span>
-                            <span class="value">${job.customerName}</span>
+                            <span class="value">${esc(job.customerName)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Delivery Type:</span>
-                            <span class="value">${job.deliveryTypeName}</span>
+                            <span class="value">${esc(job.deliveryTypeName)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Location:</span>
-                            <span class="value">${job.deliveryLocation}</span>
+                            <span class="value">${esc(job.deliveryLocation)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Requested Date:</span>
-                            <span class="value">${formattedDate}</span>
+                            <span class="value">${esc(formattedDate)}</span>
                         </div>
                         
                         ${job.deliveryWindow ? `
                         <div class="detail-row">
                             <span class="label">Preferred Window:</span>
-                            <span class="value">${job.deliveryWindow}</span>
+                            <span class="value">${esc(job.deliveryWindow)}</span>
                         </div>
                         ` : ''}
                         
                         ${job.sqm ? `
                         <div class="detail-row">
                             <span class="label">Size:</span>
-                            <span class="value">${job.sqm}m²</span>
+                            <span class="value">${esc(String(job.sqm))}m&#178;</span>
                         </div>
                         ` : ''}
                         
@@ -116,18 +120,18 @@ Deno.serve(async (req) => {
         const { data, error } = await resend.emails.send({
             from: 'SECCI <noreply@secci.info>',
             to: dispatcherEmails,
-            subject: `New Delivery Job - ${job.customerName} - ${formattedDate}`,
+            subject: `New Delivery Job - ${esc(job.customerName)} - ${formattedDate}`,
             html: htmlContent,
         });
 
         if (error) {
-            console.error('Resend API error:', data);
-            return Response.json({ error: 'Failed to send email', details: error }, { status: 500 });
+            console.error('Resend API error:', error);
+            return Response.json({ error: 'Failed to send email' }, { status: 500 });
         }
 
         return Response.json({ success: true, messageId: data.id });
     } catch (error) {
         console.error('Error sending email:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: 'Failed to send email' }, { status: 500 });
     }
 });

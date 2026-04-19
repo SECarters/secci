@@ -4,12 +4,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Verify the caller is authenticated and has an allowed role
+    // Only admin/dispatcher can trigger this — not customers
     const user = await base44.auth.me();
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    if (user.role !== 'admin' && !['dispatcher', 'driver', 'manager', 'customer'].includes(user.appRole)) {
+    if (user.role !== 'admin' && !['dispatcher', 'manager'].includes(user.appRole)) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -19,7 +19,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing jobId parameter' }, { status: 400 });
     }
 
-    // Fetch the job details
     const job = await base44.asServiceRole.entities.Job.filter({ id: jobId });
     if (!job || job.length === 0) {
       return Response.json({ error: 'Job not found' }, { status: 404 });
@@ -27,22 +26,15 @@ Deno.serve(async (req) => {
 
     const jobData = job[0];
 
-    // Get all dispatchers
-    const dispatchers = await base44.asServiceRole.entities.User.filter({
-      appRole: 'dispatcher'
-    });
-
-    // Also notify admin users
-    const admins = await base44.asServiceRole.entities.User.filter({
-      role: 'admin'
-    });
+    const dispatchers = await base44.asServiceRole.entities.User.filter({ appRole: 'dispatcher' });
+    const admins = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
 
     const usersToNotify = [...dispatchers, ...admins];
     const notificationsToCreate = [];
 
-    for (const user of usersToNotify) {
+    for (const u of usersToNotify) {
       notificationsToCreate.push({
-        userId: user.id,
+        userId: u.id,
         jobId: jobId,
         title: 'New Job Created',
         message: `New job from ${jobData.customerName} to ${jobData.deliveryLocation}`,
@@ -57,7 +49,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create all notifications
     if (notificationsToCreate.length > 0) {
       await base44.asServiceRole.entities.Notification.bulkCreate(notificationsToCreate);
     }
@@ -69,9 +60,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error handling new job creation:', error);
-    return Response.json({ 
-      error: 'Internal server error', 
-      details: error.message 
-    }, { status: 500 });
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

@@ -9,9 +9,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only allow dispatchers and admins to retrieve the API key
-    const allowedRoles = ['admin', 'dispatcher', 'driver', 'manager'];
-    if (user.role !== 'admin' && !allowedRoles.includes(user.appRole)) {
+    // Only dispatchers and admins may retrieve the API key
+    if (user.role !== 'admin' && user.appRole !== 'dispatcher') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
