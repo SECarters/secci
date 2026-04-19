@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Forbidden: Only drivers can update job status' }, { status: 403 });
         }
 
-        const { jobId, driverStatus, problemDetails, etaMinutes, routeDistance, latitude, longitude } = await req.json();
+        const { jobId, driverStatus, problemDetails, etaMinutes, routeDistance } = await req.json();
 
         if (!jobId || !driverStatus) {
             return Response.json({ 
@@ -42,19 +42,6 @@ Deno.serve(async (req) => {
         }
 
         await base44.entities.Job.update(jobId, updateData);
-
-        if (latitude && longitude && user.truck) {
-            await base44.entities.LocationUpdate.create({
-                userId: user.id,
-                userName: user.full_name,
-                truckId: user.truck,
-                latitude: parseFloat(latitude),
-                longitude: parseFloat(longitude),
-                timestamp: new Date().toISOString(),
-                source: 'driver',
-                status: driverStatus.toLowerCase().replace('_', ' ')
-            });
-        }
 
         if (driverStatus === 'PROBLEM') {
             try {
