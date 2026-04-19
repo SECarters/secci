@@ -246,7 +246,7 @@ export default function DashboardPage() {
   const isCustomer = currentUser?.role !== 'admin' && (currentUser?.appRole === 'customer' || !currentUser?.appRole);
 
   return (
-    <div className="space-y-6 max-w-7xl"  >
+    <div className="space-y-6 w-full">
       {/* Header Section */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
@@ -318,7 +318,7 @@ export default function DashboardPage() {
       {/* Today's Overview Section */}
       <div>
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Today's Overview</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Deliveries/Jobs Today */}
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = createPageUrl('DailyJobBoard')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -389,7 +389,7 @@ export default function DashboardPage() {
           <CalendarRange className="h-5 w-5 text-purple-600" />
           This Week
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-3 gap-4">
           {isCustomer ? (
             <>
               <Card className="border-purple-200 bg-purple-50">
