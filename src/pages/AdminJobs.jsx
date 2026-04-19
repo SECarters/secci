@@ -287,7 +287,7 @@ export default function AdminJobsPage() {
 
   return (
     <>
-      <div className="space-y-6 max-w-screen-2xl">
+      <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{pageTitle}</h1>
           <p className="text-gray-600 mt-1">{pageDescription}</p>
@@ -309,9 +309,9 @@ export default function AdminJobsPage() {
           </div>
         )}
 
-        <Card className="overflow-hidden">
-          <CardContent className="p-0 overflow-x-auto">
-            <Table className="min-w-[800px]">
+        <Card>
+          <CardContent className="p-0">
+            <Table>
               <TableHeader>
                 <TableRow>
                   {!isCustomer && <TableHead>Customer</TableHead>}

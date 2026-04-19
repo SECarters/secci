@@ -533,7 +533,7 @@ ${chartData.truckPerformance.map(t => `${t.name}: ${t.jobs} jobs`).join('\n')}
   }
 
   return (
-    <div className="space-y-6 max-w-screen-2xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -581,7 +581,7 @@ ${chartData.truckPerformance.map(t => `${t.name}: ${t.jobs} jobs`).join('\n')}
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full h-9 px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
                 <div>
@@ -590,7 +590,7 @@ ${chartData.truckPerformance.map(t => `${t.name}: ${t.jobs} jobs`).join('\n')}
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full h-9 px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
               </>

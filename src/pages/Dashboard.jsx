@@ -246,7 +246,7 @@ export default function DashboardPage() {
   const isCustomer = currentUser?.role !== 'admin' && (currentUser?.appRole === 'customer' || !currentUser?.appRole);
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6">
       {/* Header Section */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
@@ -256,7 +256,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Clock and Weather Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Clock Card */}
         <Card className="bg-gradient-to-br from-blue-500 to-blue-700">
           <CardContent className="p-6">
@@ -318,7 +318,7 @@ export default function DashboardPage() {
       {/* Today's Overview Section */}
       <div>
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Today's Overview</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Total Deliveries/Jobs Today */}
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = createPageUrl('DailyJobBoard')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -389,7 +389,7 @@ export default function DashboardPage() {
           <CalendarRange className="h-5 w-5 text-purple-600" />
           This Week
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {isCustomer ? (
             <>
               <Card className="border-purple-200 bg-purple-50">
@@ -501,7 +501,7 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <div>
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => window.location.href = createPageUrl(currentUser?.appRole === 'driver' ? 'DriverMyRuns' : 'SchedulingBoard')}
             className="p-6 bg-blue-50 hover:bg-blue-100 rounded-lg text-left transition-colors"
