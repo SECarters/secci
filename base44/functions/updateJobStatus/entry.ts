@@ -27,15 +27,6 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Job not found' }, { status: 404 });
         }
 
-        // Verify driver owns this job (job must be assigned to driver's truck)
-        if (user.role !== 'admin' && user.truck) {
-            const assignments = await base44.entities.Assignment.filter({ jobId });
-            const hasAssignment = assignments.some(a => a.truckId === user.truck);
-            if (!hasAssignment) {
-                return Response.json({ error: 'Forbidden: Job not assigned to your truck' }, { status: 403 });
-            }
-        }
-
         const updateData = {
             driverStatus,
             driverStatusUpdatedAt: new Date().toISOString(),
