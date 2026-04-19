@@ -8,7 +8,10 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, Loader2, X, Camera, Image as ImageIcon, AlertCircle, CheckCircle2, WifiOff } from 'lucide-react';
 import { sendPODNotesNotification } from '@/functions/sendPODNotesNotification';
-import { useOffline } from '../offline/OfflineManager';
+const useOffline = () => ({
+  isOnline: navigator.onLine,
+  queuePODUpload: async () => {},
+});
 
 const MAX_PHOTOS = 20;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB before compression

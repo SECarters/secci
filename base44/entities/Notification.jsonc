@@ -1,0 +1,77 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "description": "ID of the user to notify"
+    },
+    "jobId": {
+      "type": "string",
+      "description": "ID of the job related to the notification"
+    },
+    "message": {
+      "type": "string",
+      "description": "The notification message content"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short title for the notification"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "job_status_update",
+        "new_job",
+        "unassigned_job_alert",
+        "info"
+      ],
+      "description": "Category of the notification"
+    },
+    "isRead": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has read the notification"
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "oldStatus": {
+          "type": "string"
+        },
+        "newStatus": {
+          "type": "string"
+        },
+        "customerName": {
+          "type": "string"
+        },
+        "deliveryLocation": {
+          "type": "string"
+        }
+      },
+      "description": "Additional data related to the notification"
+    }
+  },
+  "required": [
+    "userId",
+    "message",
+    "type"
+  ],
+  "rls": {
+    "read": {
+      "userId": "{{user.id}}"
+    },
+    "write": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "userId": "{{user.id}}"
+        }
+      ]
+    }
+  }
+}
