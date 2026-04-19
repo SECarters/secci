@@ -668,11 +668,11 @@ export default function Layout({ children, currentPageName }) {
           </div>
 
           {/* Desktop header with notification bell */}
-          <div className="hidden md:flex items-center justify-end px-6 py-3 bg-white border-b">
+          <div className="hidden md:flex items-center justify-end px-6 py-2 bg-white border-b min-h-[48px]">
             <NotificationBell />
           </div>
 
-          <main className="flex-1 overflow-y-auto p-6">
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 max-w-screen-2xl">
             {children}
           </main>
         </div>

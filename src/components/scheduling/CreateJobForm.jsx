@@ -711,7 +711,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
   return (
     <>
       <Dialog open={open && !showConfirmation} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-2xl w-[95vw]">
           <DialogHeader>
             <DialogTitle>Create New Job</DialogTitle>
           </DialogHeader>

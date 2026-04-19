@@ -864,13 +864,13 @@ export default function SchedulingBoard() {
   return (
     <>
       <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
-            <div className="bg-white border-b px-4 md:px-6 py-4 flex-shrink-0 z-30">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <h1 className="text-xl md:text-2xl font-bold text-gray-900">Delivery Scheduler</h1>
-                  <p className="text-sm md:text-base text-gray-600 mt-1">Schedule and manage daily deliveries</p>
+            <div className="bg-white border-b px-4 md:px-6 py-3 flex-shrink-0 z-30">
+              <div className="flex flex-wrap justify-between items-center gap-3">
+                <div className="min-w-0">
+                  <h1 className="text-lg md:text-xl font-bold text-gray-900 truncate">Delivery Scheduler</h1>
+                  <p className="text-xs md:text-sm text-gray-500">Schedule and manage daily deliveries</p>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
                   {/* Notification Dropdown - Only for admins and dispatchers */}
                   {canSeeNotifications && (
                     <DropdownMenu open={notificationOpen} onOpenChange={setNotificationOpen}>
@@ -1062,12 +1062,12 @@ export default function SchedulingBoard() {
                     </DropdownMenu>
                   )}
 
-                  <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
-                    <Button variant="ghost" size="icon" onClick={goToPreviousDay}>
+                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg px-1 py-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToPreviousDay}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <div className="flex items-center gap-2 px-3">
-                      <Calendar className="h-4 w-4 text-gray-500" />
+                    <div className="flex items-center gap-1.5 px-2">
+                      <Calendar className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
                       <input
                         type="date"
                         value={selectedDate}
@@ -1075,10 +1075,10 @@ export default function SchedulingBoard() {
                           setSelectedDate(e.target.value);
                           updateDateInUrl(e.target.value);
                         }}
-                        className="border-none bg-transparent text-sm font-medium focus:outline-none"
+                        className="border-none bg-transparent text-sm font-medium focus:outline-none w-[130px]"
                       />
                     </div>
-                    <Button variant="ghost" size="icon" onClick={goToNextDay}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToNextDay}>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
