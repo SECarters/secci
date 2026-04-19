@@ -134,7 +134,6 @@ export default function AddressInput({
   const geocodeAddressFunc = async (address) => {
     setGeocoding(true);
     try {
-      // Use Google Places API for geocoding
       const response = await base44.functions.invoke('geocodeAddress', { address });
       const data = response.data || response;
       
