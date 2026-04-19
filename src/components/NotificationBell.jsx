@@ -31,13 +31,29 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchNotifications();
-    
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(() => {
-      fetchNotifications();
-    }, 30000);
 
-    return () => clearInterval(interval);
+    // Real-time subscription for new/updated notifications
+    const unsubscribe = base44.entities.Notification.subscribe((event) => {
+      if (event.type === 'create') {
+        setNotifications(prev => [event.data, ...prev].slice(0, 50));
+        if (!event.data.isRead) setUnreadCount(prev => prev + 1);
+      } else if (event.type === 'update') {
+        setNotifications(prev => prev.map(n => n.id === event.id ? event.data : n));
+        // Recount unread
+        setNotifications(prev => {
+          setUnreadCount(prev.filter(n => !n.isRead).length);
+          return prev;
+        });
+      } else if (event.type === 'delete') {
+        setNotifications(prev => {
+          const removed = prev.find(n => n.id === event.id);
+          if (removed && !removed.isRead) setUnreadCount(c => Math.max(0, c - 1));
+          return prev.filter(n => n.id !== event.id);
+        });
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleMarkAsRead = async (notificationId) => {

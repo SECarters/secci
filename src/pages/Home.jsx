@@ -18,7 +18,7 @@ export default function HomePage() {
         if (user.appRole === 'dispatcher') {
           window.location.href = createPageUrl('Dashboard');
         } else if (user.appRole === 'driver') {
-          window.location.href = createPageUrl('DriverDashboard');
+          window.location.href = createPageUrl('Dashboard');
         } else if (user.appRole === 'manager') {
           window.location.href = createPageUrl('Dashboard');
         } else {

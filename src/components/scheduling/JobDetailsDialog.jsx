@@ -97,8 +97,6 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
   const handleApprove = async () => {
     try {
       await base44.entities.Job.update(currentJob.id, { ...currentJob, status: 'APPROVED' });
-
-      // Log status change
       await base44.entities.JobActivityLog.create({
         jobId: currentJob.id,
         customerId: currentJob.customerId,
@@ -111,24 +109,13 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
         oldValue: 'PENDING_APPROVAL',
         newValue: 'APPROVED'
       });
-
-      // Invalidate queries for instant update
+      base44.functions.invoke('handleJobStatusChange', { jobId: currentJob.id, oldStatus: currentJob.status, newStatus: 'APPROVED' }).catch(console.error);
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
       queryClient.invalidateQueries({ queryKey: ['job', currentJob.id] });
-
-      toast({
-        title: "Job Approved",
-        description: "The job has been approved and is ready for scheduling.",
-      });
-      if (onJobUpdated) {
-        onJobUpdated();
-      }
+      toast({ title: "Job Approved", description: "The job has been approved and is ready for scheduling." });
+      if (onJobUpdated) onJobUpdated();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to approve job. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to approve job. Please try again.", variant: "destructive" });
       console.error("Failed to approve job:", error);
     }
   };
@@ -136,8 +123,6 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
   const handleCancel = async () => {
     try {
       await base44.entities.Job.update(currentJob.id, { ...currentJob, status: 'CANCELLED' });
-
-      // Log status change
       await base44.entities.JobActivityLog.create({
         jobId: currentJob.id,
         customerId: currentJob.customerId,
@@ -150,24 +135,13 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
         oldValue: currentJob.status,
         newValue: 'CANCELLED'
       });
-
-      // Invalidate queries for instant update
+      base44.functions.invoke('handleJobStatusChange', { jobId: currentJob.id, oldStatus: currentJob.status, newStatus: 'CANCELLED' }).catch(console.error);
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
       queryClient.invalidateQueries({ queryKey: ['job', currentJob.id] });
-
-      toast({
-        title: "Job Cancelled",
-        description: "The job has been cancelled.",
-      });
-      if (onJobUpdated) {
-        onJobUpdated();
-      }
+      toast({ title: "Job Cancelled", description: "The job has been cancelled." });
+      if (onJobUpdated) onJobUpdated();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to cancel job. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to cancel job. Please try again.", variant: "destructive" });
       console.error("Failed to cancel job:", error);
     }
   };
@@ -444,10 +418,12 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                         onClick={async () => {
                           try {
                             const newStatus = currentJob.status === 'DELIVERED' ? 'SCHEDULED' : 'DELIVERED';
-                            await base44.entities.Job.update(currentJob.id, { 
-                              ...currentJob, 
-                              status: newStatus
-                            });
+                            const updatePayload = { ...currentJob, status: newStatus };
+                            if (newStatus === 'DELIVERED') updatePayload.deliveredAt = new Date().toISOString();
+                            await base44.entities.Job.update(currentJob.id, updatePayload);
+                            if (newStatus === 'DELIVERED' || newStatus === 'SCHEDULED') {
+                              base44.functions.invoke('handleJobStatusChange', { jobId: currentJob.id, oldStatus: currentJob.status, newStatus }).catch(console.error);
+                            }
 
                             // Log status change
                             await base44.entities.JobActivityLog.create({

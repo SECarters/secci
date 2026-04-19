@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const DISPATCH_EMAIL = Deno.env.get('DISPATCH_EMAIL') || 'dispatch@secdelivery.com.au';
+const DISPATCH_EMAIL = Deno.env.get('DISPATCH_EMAIL');
 
 Deno.serve(async (req) => {
     try {
@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Forbidden: Only drivers can update job status' }, { status: 403 });
         }
 
-        const { jobId, driverStatus, problemDetails, etaMinutes, routeDistance } = await req.json();
+        const { jobId, driverStatus, problemDetails } = await req.json();
 
         if (!jobId || !driverStatus) {
             return Response.json({ 
@@ -34,16 +34,21 @@ Deno.serve(async (req) => {
         };
 
         if (problemDetails) updateData.problemDetails = problemDetails;
-        if (etaMinutes !== undefined) updateData.etaMinutes = etaMinutes;
-        if (routeDistance !== undefined) updateData.routeDistance = routeDistance;
 
         if (driverStatus === 'EN_ROUTE' || driverStatus === 'ARRIVED' || driverStatus === 'UNLOADING') {
             updateData.navigationStarted = true;
         }
 
+        // When driver marks COMPLETED, also set the top-level job status to DELIVERED
+        // and record the deliveredAt timestamp
+        if (driverStatus === 'COMPLETED') {
+            updateData.status = 'DELIVERED';
+            updateData.deliveredAt = new Date().toISOString();
+        }
+
         await base44.entities.Job.update(jobId, updateData);
 
-        if (driverStatus === 'PROBLEM') {
+        if (driverStatus === 'PROBLEM' && DISPATCH_EMAIL) {
             try {
                 await base44.asServiceRole.integrations.Core.SendEmail({
                     to: DISPATCH_EMAIL,
@@ -60,6 +65,19 @@ Deno.serve(async (req) => {
                 });
             } catch (emailError) {
                 console.error('Failed to send problem notification email:', emailError);
+            }
+        }
+
+        // Fire status change notifications when job becomes DELIVERED
+        if (driverStatus === 'COMPLETED') {
+            try {
+                await base44.asServiceRole.functions.invoke('handleJobStatusChange', {
+                    jobId,
+                    oldStatus: job.status,
+                    newStatus: 'DELIVERED'
+                });
+            } catch (e) {
+                console.error('Failed to fire handleJobStatusChange:', e);
             }
         }
 

@@ -11,7 +11,8 @@ export default function AddressInput({
   onAddressConfirmed,
   placeholder = "Enter delivery address",
   required = false,
-  className 
+  className,
+  customerId = null
 }) {
   const [inputValue, setInputValue] = useState(value || '');
   const [suggestions, setSuggestions] = useState([]);
@@ -134,7 +135,7 @@ export default function AddressInput({
   const geocodeAddressFunc = async (address) => {
     setGeocoding(true);
     try {
-      const response = await base44.functions.invoke('geocodeAddress', { address });
+      const response = await base44.functions.invoke('geocodeAddress', { query: address });
       const data = response.data || response;
       
       if (data.success && data.result) {
@@ -228,21 +229,28 @@ export default function AddressInput({
             postcode: result.postcode
           });
 
-          // Save to local database for future use
+          // Save to local database for future use — deduplicate first
           try {
-            await base44.entities.AddressLookup.create({
-              address: result.address,
-              streetNumber: result.streetNumber,
-              streetName: result.streetName,
-              streetType: result.streetType,
-              suburb: result.suburb,
-              state: result.state,
-              postcode: result.postcode,
-              latitude: result.latitude,
-              longitude: result.longitude,
-              usageCount: 1
-            });
-            // Refresh saved addresses
+            const existing = savedAddresses.find(a =>
+              a.address?.toLowerCase() === result.address?.toLowerCase()
+            );
+            if (existing) {
+              await base44.entities.AddressLookup.update(existing.id, { usageCount: (existing.usageCount || 0) + 1 });
+            } else {
+              await base44.entities.AddressLookup.create({
+                address: result.address,
+                streetNumber: result.streetNumber,
+                streetName: result.streetName,
+                streetType: result.streetType,
+                suburb: result.suburb,
+                state: result.state,
+                postcode: result.postcode,
+                latitude: result.latitude,
+                longitude: result.longitude,
+                usageCount: 1,
+                ...(customerId ? { customerId } : {})
+              });
+            }
             const addresses = await base44.entities.AddressLookup.list('-usageCount', 100);
             setSavedAddresses(addresses);
           } catch (err) {

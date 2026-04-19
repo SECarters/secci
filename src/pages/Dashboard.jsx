@@ -66,11 +66,14 @@ export default function DashboardPage() {
         const today = format(startOfDay(new Date()), 'yyyy-MM-dd');
         const mondayThisWeek = startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday this week
         const sundayThisWeek = addDays(mondayThisWeek, 6); // Sunday this week
+
+        // Only fetch jobs from the last 7 days onward (keep dashboard queries lean)
+        const sevenDaysAgo = format(addDays(new Date(), -7), 'yyyy-MM-dd');
         
         // Fetch delivery types and filter for Manitou jobs if outreach user
         const [todayAssignments, allJobs, deliveryTypes] = await Promise.all([
           base44.entities.Assignment.filter({ date: today }),
-          base44.entities.Job.list(),
+          base44.entities.Job.filter({ requestedDate: { $gte: sevenDaysAgo } }),
           base44.entities.DeliveryType.list()
         ]);
 
@@ -125,7 +128,9 @@ export default function DashboardPage() {
         });
 
         // Week Ahead stats (now → end of Sunday this week)
-        const allAssignments = await base44.entities.Assignment.list();
+        const allAssignments = await base44.entities.Assignment.filter({
+          date: { $gte: format(mondayThisWeek, 'yyyy-MM-dd'), $lte: format(sundayThisWeek, 'yyyy-MM-dd') }
+        });
         const weekAheadAssignments = allAssignments.filter(a => {
           const assignmentDate = new Date(a.date);
           const now = new Date();

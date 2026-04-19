@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
                         
                         <div class="detail-row">
                             <span class="label">Returned By:</span>
-                            <span class="value">${esc(job.returnedBy) || 'Driver'}</span>
+                            <span class="value">${esc(job.returnedByName) || 'SECCI Driver'}</span>
                         </div>
                         
                         <p style="margin-top: 20px; padding: 15px; background-color: #fef3c7; border-radius: 4px; border-left: 4px solid #f59e0b;">

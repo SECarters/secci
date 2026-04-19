@@ -9,21 +9,7 @@ import { base44 } from '@/api/base44Client';
 import { CalendarClock } from 'lucide-react';
 import { format } from 'date-fns';
 
-const TRUCKS = [
-  { id: 'ACCO1', name: 'ACCO1' },
-  { id: 'ACCO2', name: 'ACCO2' },
-  { id: 'FUSO', name: 'FUSO' },
-  { id: 'ISUZU', name: 'ISUZU' },
-  { id: 'UD', name: 'UD' }
-];
-
-const DELIVERY_WINDOWS = [
-  { id: 'first-am', label: '6-8am (1st AM)' },
-  { id: 'second-am', label: '8-10am (2nd AM)' },
-  { id: 'lunch', label: '10am-12pm (LUNCH)' },
-  { id: 'first-pm', label: '12-2pm (1st PM)' },
-  { id: 'second-pm', label: '2-4pm (2nd PM)' }
-];
+import { TRUCKS, DELIVERY_WINDOWS } from '@/lib/constants';
 
 export default function ScheduleJobDialog({ job, assignment, open, onOpenChange, onScheduled }) {
   const [selectedTruck, setSelectedTruck] = useState('');

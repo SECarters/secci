@@ -196,6 +196,6 @@ async function fallbackGeocode(apiKey, query, stateFilter) {
     
   } catch (error) {
     console.error('Fallback geocode error:', error);
-    return Response.json({ success: false, suggestions: [], error: error.message });
+    return Response.json({ success: false, suggestions: [], error: 'Geocode request failed' });
   }
 }

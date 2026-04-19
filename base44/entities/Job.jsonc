@@ -1,0 +1,516 @@
+{
+  "name": "Job",
+  "type": "object",
+  "properties": {
+    "customerId": {
+      "type": "string"
+    },
+    "customerName": {
+      "type": "string"
+    },
+    "customerReference": {
+      "type": "string",
+      "description": "A reference number provided by the customer"
+    },
+    "deliveryTypeId": {
+      "type": "string"
+    },
+    "deliveryTypeName": {
+      "type": "string"
+    },
+    "pickupLocationId": {
+      "type": "string"
+    },
+    "pickupLocation": {
+      "type": "string",
+      "description": "Display name for pickup location (Company - Location)"
+    },
+    "deliveryLocation": {
+      "type": "string"
+    },
+    "deliveryStreetNumber": {
+      "type": "string",
+      "description": "Street number (e.g., '123' or 'Lot 45')"
+    },
+    "deliveryStreetName": {
+      "type": "string",
+      "description": "Street name"
+    },
+    "deliveryStreetType": {
+      "type": "string",
+      "description": "Street type (e.g., 'Street', 'Road', 'Avenue')"
+    },
+    "deliverySuburb": {
+      "type": "string",
+      "description": "Suburb/city name"
+    },
+    "deliveryState": {
+      "type": "string",
+      "description": "State (e.g., 'QLD', 'NSW')"
+    },
+    "deliveryPostcode": {
+      "type": "string",
+      "description": "Postcode"
+    },
+    "deliveryLatitude": {
+      "type": "number",
+      "description": "Latitude coordinate for delivery location"
+    },
+    "deliveryLongitude": {
+      "type": "number",
+      "description": "Longitude coordinate for delivery location"
+    },
+    "requestedDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "totalUnits": {
+      "type": "number",
+      "description": "Number of separate dockets/orders being delivered"
+    },
+    "totalSheetQty": {
+      "type": "number",
+      "description": "Total quantity of sheets/boards across all dockets"
+    },
+    "poSalesDocketNumber": {
+      "type": "string"
+    },
+    "orderNumber": {
+      "type": "string",
+      "description": "The reference number for the sales order"
+    },
+    "deliveryWindow": {
+      "type": "string",
+      "enum": [
+        "6-8am (1st AM)",
+        "8-10am (2nd AM)",
+        "10am-12pm (LUNCH)",
+        "12-2pm (1st PM)",
+        "2-4pm (2nd PM)",
+        "Any Time"
+      ]
+    },
+    "sqm": {
+      "type": "number"
+    },
+    "weightKg": {
+      "type": "number"
+    },
+    "totalLengths": {
+      "type": "number",
+      "description": "The total count of all items measured by length"
+    },
+    "totalLm": {
+      "type": "number",
+      "description": "Total length in linear meters"
+    },
+    "totalM2": {
+      "type": "number",
+      "description": "Total area in square meters"
+    },
+    "totalSheets": {
+      "type": "number",
+      "description": "Total count of all sheets"
+    },
+    "totalWeight": {
+      "type": "number",
+      "description": "The total weight of all items in the delivery"
+    },
+    "siteContactName": {
+      "type": "string"
+    },
+    "siteContactPhone": {
+      "type": "string"
+    },
+    "deliveryNotes": {
+      "type": "string"
+    },
+    "sheetList": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Item description (e.g., '2400x1200x10mm Std White Board')"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity of this item"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit of measurement (e.g., 'sheets', 'pcs', 'm')"
+          }
+        }
+      },
+      "description": "Detailed list of items from the work order/consignment/docket"
+    },
+    "lineItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "orderedQuantity": {
+            "type": "string",
+            "description": "The quantity and unit of the product ordered (e.g., '52.0 Sheet')"
+          },
+          "productCode": {
+            "type": "string",
+            "description": "The unique code or SKU for the product"
+          },
+          "productDescription": {
+            "type": "string",
+            "description": "The description of the product"
+          },
+          "weight": {
+            "type": "number",
+            "description": "The weight of the line item, typically in kilograms"
+          }
+        }
+      },
+      "description": "Line items extracted from document AI"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of uploaded attachment file URLs (PDFs, images, etc)"
+    },
+    "podFiles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of uploaded proof of delivery file URLs"
+    },
+    "podNotes": {
+      "type": "string",
+      "description": "Driver's notes about the delivery from POD submission"
+    },
+    "jobPhotos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "caption": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "uploadedBy": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Array of job-specific photos/videos with metadata"
+    },
+    "nonStandardDelivery": {
+      "type": "object",
+      "properties": {
+        "longWalk": {
+          "type": "boolean",
+          "default": false
+        },
+        "longWalkDistance": {
+          "type": "number",
+          "description": "Distance in metres"
+        },
+        "passUp": {
+          "type": "boolean",
+          "default": false
+        },
+        "passDown": {
+          "type": "boolean",
+          "default": false
+        },
+        "stairs": {
+          "type": "boolean",
+          "default": false
+        },
+        "stairsCount": {
+          "type": "number",
+          "description": "Number of stairs"
+        },
+        "fourManNeeded": {
+          "type": "boolean",
+          "default": false
+        },
+        "moreThan2000Sqm": {
+          "type": "boolean",
+          "default": false
+        },
+        "zoneC": {
+          "type": "boolean",
+          "default": false
+        },
+        "other": {
+          "type": "boolean",
+          "default": false
+        },
+        "otherDetails": {
+          "type": "string"
+        }
+      },
+      "description": "Non-standard delivery requirements"
+    },
+    "isDifficultDelivery": {
+      "type": "boolean",
+      "default": false
+    },
+    "deliveryDifficulty": {
+      "type": "string",
+      "enum": [
+        "Long Walk",
+        "Pass Up/Down",
+        "Stairs",
+        "More than 2000m\u00b2",
+        "Traffic Control",
+        "More than 150km from pickup",
+        "Other"
+      ]
+    },
+    "isReturned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the job was returned to supplier"
+    },
+    "returnReason": {
+      "type": "string",
+      "description": "Free-text reason why job was returned"
+    },
+    "returnPhotos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of photo URLs documenting the return reason"
+    },
+    "returnNotes": {
+      "type": "string",
+      "description": "Additional details about the return"
+    },
+    "returnedBy": {
+      "type": "string",
+      "description": "Email of user who returned the job"
+    },
+    "returnedByName": {
+      "type": "string",
+      "description": "Name of user who returned the job"
+    },
+    "returnedDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the job was returned"
+    },
+    "returnedTruckId": {
+      "type": "string",
+      "description": "ID of the truck that returned the job"
+    },
+    "returnAlertDismissedBy": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of user IDs who have dismissed the return alert"
+    },
+    "returnAlertRemindLater": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of user IDs who chose remind me later"
+    },
+    "requiresManitou": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this job requires a Manitou machine (for Outreach Hire)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Plasterboard",
+        "Other"
+      ],
+      "description": "Job category for cross-tenant visibility"
+    },
+    "tenantId": {
+      "type": "string",
+      "enum": [
+        "plasterboard_dispatch",
+        "outreach_hire"
+      ],
+      "default": "plasterboard_dispatch",
+      "description": "Which tenant owns this job"
+    },
+    "externalRef": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string"
+        },
+        "jobId": {
+          "type": "string"
+        },
+        "lastConfirmedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Reference to linked job in another tenant's system"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING_APPROVAL",
+        "APPROVED",
+        "SCHEDULED",
+        "IN_TRANSIT",
+        "DELIVERED",
+        "RETURNED",
+        "CANCELLED"
+      ],
+      "default": "APPROVED"
+    },
+    "driverStatus": {
+      "type": "string",
+      "enum": [
+        "NOT_STARTED",
+        "EN_ROUTE",
+        "ARRIVED",
+        "UNLOADING",
+        "PROBLEM",
+        "COMPLETED"
+      ],
+      "description": "Real-time driver status for the job"
+    },
+    "driverStatusUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When driver status was last updated"
+    },
+    "driverStatusUpdatedBy": {
+      "type": "string",
+      "description": "Driver who updated the status"
+    },
+    "deliveredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the job was marked as delivered (set from driverStatusUpdatedAt when driverStatus=COMPLETED, or manually)"
+    },
+    "problemDetails": {
+      "type": "string",
+      "description": "Details about the problem if status is PROBLEM"
+    },
+    "navigationStarted": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether driver has started navigation to this job"
+    }
+  },
+  "required": [
+    "customerId",
+    "customerName",
+    "deliveryTypeId",
+    "deliveryTypeName",
+    "pickupLocationId",
+    "pickupLocation",
+    "deliveryLocation",
+    "requestedDate",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "data.appRole": "dispatcher"
+          }
+        },
+        {
+          "user_condition": {
+            "data.appRole": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "data.appRole": "driver"
+          }
+        },
+        {
+          "user_condition": {
+            "data.appRole": "customer"
+          },
+          "customerId": "{{user.customerId}}"
+        },
+        {
+          "user_condition": {
+            "data.appRole": "customer"
+          },
+          "customerId": {
+            "$in": "{{user.additionalCustomerIds}}"
+          }
+        },
+        {
+          "user_condition": {
+            "$or": [
+              {
+                "data.appRole": "outreach"
+              },
+              {
+                "data.appRole": "outreachOperator"
+              }
+            ]
+          },
+          "requiresManitou": true
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "customerId": "{{user.customerId}}"
+        },
+        {
+          "customerId": {
+            "$in": "{{user.additionalCustomerIds}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "data.appRole": "dispatcher"
+          }
+        },
+        {
+          "user_condition": {
+            "$or": [
+              {
+                "data.appRole": "outreach"
+              },
+              {
+                "data.appRole": "outreachOperator"
+              }
+            ]
+          },
+          "requiresManitou": true
+        }
+      ]
+    }
+  }
+}

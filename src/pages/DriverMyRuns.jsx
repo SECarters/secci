@@ -7,21 +7,50 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import ProofOfDeliveryUpload from '../components/scheduling/ProofOfDeliveryUpload';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, MapPin, Package, Clock, Navigation, AlertTriangle, CheckCircle2, Truck as TruckIcon, Radio, AlertCircle, ExternalLink, RefreshCw, WifiOff } from 'lucide-react';
-import { format, isToday, isTomorrow, parseISO } from 'date-fns';
+import { Calendar, MapPin, Package, Clock, AlertTriangle, CheckCircle2, Truck as TruckIcon, Radio, AlertCircle, RefreshCw, WifiOff } from 'lucide-react';
+import { format, parseISO, subDays, addDays as dateFnsAddDays } from 'date-fns';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
 import { useToast } from '@/components/ui/use-toast';
 import { updateJobStatus } from '@/functions/updateJobStatus';
-const useOffline = () => ({
-  isOnline: navigator.onLine,
-  cacheJobs: async () => {},
-  cacheAssignments: async () => {},
-  getCachedJobs: async () => [],
-  getCachedAssignments: async () => [],
-});
 import { getJobCardStyles } from '../components/scheduling/DeliveryTypeColorUtils';
 import DeliveryTypeLegend from '../components/scheduling/DeliveryTypeLegend';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { TRUCKS } from '@/lib/constants';
+
+const CACHE_KEY_JOBS = 'secci_cached_jobs';
+const CACHE_KEY_ASSIGNMENTS = 'secci_cached_assignments';
+
+const useOffline = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
+  return {
+    isOnline,
+    cacheJobs: async (jobs) => {
+      try { localStorage.setItem(CACHE_KEY_JOBS, JSON.stringify(jobs)); } catch (_) {}
+    },
+    cacheAssignments: async (assignments) => {
+      try { localStorage.setItem(CACHE_KEY_ASSIGNMENTS, JSON.stringify(assignments)); } catch (_) {}
+    },
+    getCachedJobs: async () => {
+      try { return JSON.parse(localStorage.getItem(CACHE_KEY_JOBS) || '[]'); } catch (_) { return []; }
+    },
+    getCachedAssignments: async () => {
+      try { return JSON.parse(localStorage.getItem(CACHE_KEY_ASSIGNMENTS) || '[]'); } catch (_) { return []; }
+    },
+  };
+};
 
 const STATUS_OPTIONS = [
   { value: 'EN_ROUTE', label: 'En Route', icon: TruckIcon, color: 'bg-blue-600' },
@@ -52,6 +81,7 @@ export default function DriverMyRuns() {
   const [podDialogJob, setPodDialogJob] = useState(null);
 
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { isOnline, cacheJobs, cacheAssignments, getCachedJobs, getCachedAssignments } = useOffline();
 
   // Fetch delivery types for color coding
@@ -68,17 +98,21 @@ export default function DriverMyRuns() {
       setCurrentUser(user);
 
       if (user.truck) {
-        let allAssignments, allJobs, allPlaceholders;
+      let allAssignments, allJobs, allPlaceholders;
 
-        if (isOnline) {
-          // Online - fetch from server, filtering out cancelled jobs for drivers
-          [allAssignments, allJobs, allPlaceholders] = await Promise.all([
-            base44.entities.Assignment.list(),
-            base44.entities.Job.filter({
-              status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED'] }
-            }),
-            base44.entities.Placeholder.list()
-          ]);
+      // Date window: past 14 days to next 7 days
+      const windowStart = format(subDays(new Date(), 14), 'yyyy-MM-dd');
+      const windowEnd = format(dateFnsAddDays(new Date(), 7), 'yyyy-MM-dd');
+
+      if (isOnline) {
+        // Online - fetch from server with date window filter
+        [allAssignments, allJobs, allPlaceholders] = await Promise.all([
+          base44.entities.Assignment.filter({ date: { $gte: windowStart, $lte: windowEnd } }),
+          base44.entities.Job.filter({
+            status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED'] }
+          }),
+          base44.entities.Placeholder.filter({ date: { $gte: windowStart, $lte: windowEnd } })
+        ]);
 
           // Cache for offline use
           await cacheAssignments(allAssignments);
@@ -365,28 +399,6 @@ export default function DriverMyRuns() {
     }
   };
 
-  const handleStartNavigation = (job) => {
-    if (!job.deliveryLatitude || !job.deliveryLongitude) {
-      const address = encodeURIComponent(job.deliveryLocation);
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${address}`, '_blank');
-    } else {
-      window.open(
-        `https://www.google.com/maps/dir/?api=1&destination=${job.deliveryLatitude},${job.deliveryLongitude}`,
-        '_blank'
-      );
-    }
-
-    if (isOnline) {
-      updateJobStatus({
-        jobId: job.id,
-        driverStatus: 'EN_ROUTE',
-        navigationStarted: true
-      });
-
-      fetchData(false);
-    }
-  };
-
   const today = format(new Date(), 'yyyy-MM-dd');
   const tomorrow = format(new Date(Date.now() + 86400000), 'yyyy-MM-dd');
 
@@ -648,11 +660,7 @@ export default function DriverMyRuns() {
                 <SelectValue placeholder="Select truck" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ACCO1">ACCO1</SelectItem>
-                <SelectItem value="ACCO2">ACCO2</SelectItem>
-                <SelectItem value="FUSO">FUSO</SelectItem>
-                <SelectItem value="ISUZU">ISUZU</SelectItem>
-                <SelectItem value="UD">UD</SelectItem>
+                {TRUCKS.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
               </SelectContent>
             </Select>
             {!isOnline && jobs.length > 0 && (

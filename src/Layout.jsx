@@ -213,6 +213,13 @@ const DriverNav = ({ collapsed, onNavigate }) =>
     <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
   </>;
 
+const OutreachNav = ({ collapsed, onNavigate }) =>
+  <>
+    <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
+    <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
+    <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+  </>;
+
 const CustomerNav = ({ collapsed, onNavigate }) =>
   <>
     <NavLink to={createPageUrl('AdminJobs')} icon={Briefcase} collapsed={collapsed} onClick={onNavigate}>My Jobs</NavLink>
@@ -380,7 +387,7 @@ export default function Layout({ children, currentPageName }) {
           } else if (currentUser.appRole === 'customer') {
             dashboardUrl = createPageUrl('AdminJobs');
           } else if (currentUser.appRole === 'outreach' || currentUser.appRole === 'outreachOperator') {
-            dashboardUrl = createPageUrl('Dashboard');
+            dashboardUrl = createPageUrl('DailyJobBoard');
           } else {
             dashboardUrl = createPageUrl('DailyJobBoard');
           }
@@ -442,6 +449,9 @@ export default function Layout({ children, currentPageName }) {
         return <DriverNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
       case 'manager':
         return <ManagerNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+      case 'outreach':
+      case 'outreachOperator':
+        return <OutreachNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
       case 'customer':
       default:
         return <CustomerNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
