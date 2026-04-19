@@ -22,29 +22,30 @@ Deno.serve(async (req) => {
         const json_schema = {
             type: "object",
             properties: {
-                customer_name: { type: "string" },
-                customer_reference: { type: "string" },
-                delivery_address: { type: "string" },
-                order_number: { type: "string" },
-                supplier_name: { type: "string" },
-                shipping_date: { type: "string" },
-                site_contact: { type: "string" },
-                site_contact_phone: { type: "string" },
-                total_m2: { type: "number" },
-                total_weight: { type: "number" },
-                total_sheets: { type: "number" },
-                delivery_notes: { type: "string" },
+                customer_name: { type: "string", description: "Name of the customer or recipient" },
+                customer_reference: { type: "string", description: "Customer PO or reference number" },
+                delivery_address: { type: "string", description: "Full delivery address" },
+                order_number: { type: "string", description: "Order or docket number" },
+                supplier_name: { type: "string", description: "Supplier or manufacturer name" },
+                shipping_date: { type: "string", description: "Requested delivery or shipping date (ISO format if possible)" },
+                site_contact: { type: "string", description: "Site contact person name" },
+                site_contact_phone: { type: "string", description: "Site contact phone number" },
+                total_m2: { type: "number", description: "Total square metres across all line items" },
+                total_weight: { type: "number", description: "Total weight in kilograms across all line items. If not explicitly shown, sum the weight values from all line items." },
+                total_sheets: { type: "number", description: "Total number of sheets/boards/pieces across all line items" },
+                delivery_notes: { type: "string", description: "Any delivery instructions or notes" },
                 line_items: {
                     type: "array",
+                    description: "Every line item/product row in the document. Extract ALL rows.",
                     items: {
                         type: "object",
                         properties: {
-                            product_code: { type: "string" },
-                            product_description: { type: "string" },
-                            quantity: { type: "number" },
-                            unit: { type: "string" },
-                            m2: { type: "number" },
-                            weight: { type: "number" }
+                            product_code: { type: "string", description: "Product code or SKU" },
+                            product_description: { type: "string", description: "Full product description including dimensions and type (e.g. '2400x1200x10mm Std White Board')" },
+                            quantity: { type: "number", description: "Number of units/sheets for this line item" },
+                            unit: { type: "string", description: "Unit of measure (e.g. 'Sheet', 'Pcs', 'Lm')" },
+                            m2: { type: "number", description: "Square metres for this line item. Calculate as quantity × m2_per_unit if not shown directly." },
+                            weight: { type: "number", description: "Weight in kilograms for this line item total. Look for columns labelled Weight, Wt, kg, Mass, Nett Weight, Gross Weight. Calculate as quantity × weight_per_unit if a unit weight is given. Do NOT leave blank if any weight information is present in the document." }
                         }
                     }
                 }
@@ -63,7 +64,15 @@ Deno.serve(async (req) => {
             }, { status: 422 });
         }
 
-        return Response.json({ success: true, data: result.output });
+        const output = result.output;
+
+        // If total_weight is missing but line items have weights, sum them
+        if (!output.total_weight && output.line_items?.length > 0) {
+            const summedWeight = output.line_items.reduce((sum, item) => sum + (item.weight || 0), 0);
+            if (summedWeight > 0) output.total_weight = summedWeight;
+        }
+
+        return Response.json({ success: true, data: output });
 
     } catch (error) {
         console.error('Document extraction error:', error);

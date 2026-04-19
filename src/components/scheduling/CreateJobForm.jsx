@@ -339,43 +339,10 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       
       setAttachments(prev => [...prev, fileUrl]);
 
-      const extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
-        file_url: fileUrl,
-        json_schema: {
-          type: "object",
-          properties: {
-            customer_name: { type: "string" },
-            customer_reference: { type: "string" },
-            delivery_address: { type: "string" },
-            order_number: { type: "string" },
-            supplier_name: { type: "string" },
-            shipping_date: { type: "string" },
-            site_contact: { type: "string" },
-            site_contact_phone: { type: "string" },
-            total_m2: { type: "number" },
-            total_weight: { type: "number" },
-            total_sheets: { type: "number" },
-            delivery_notes: { type: "string" },
-            line_items: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  product_code: { type: "string" },
-                  product_description: { type: "string" },
-                  quantity: { type: "number" },
-                  unit: { type: "string" },
-                  m2: { type: "number" },
-                  weight: { type: "number" }
-                }
-              }
-            }
-          }
-        }
-      });
+      const extractResult = await base44.functions.invoke('extractDeliveryData', { fileUrl });
 
-      if (extractResult?.status === 'success' && extractResult?.output) {
-        const extracted = extractResult.output;
+      if (extractResult?.data?.success && extractResult?.data?.data) {
+        const extracted = extractResult.data.data;
         setExtractedData(extracted);
 
         const updates = {};
@@ -493,7 +460,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       } else {
         toast({
           title: "Extraction Complete",
-          description: "Document processed but no data could be extracted. Please fill the form manually.",
+          description: extractResult?.data?.error || "Document processed but no data could be extracted. Please fill the form manually.",
           variant: "destructive",
         });
       }
