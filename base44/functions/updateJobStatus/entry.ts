@@ -1,13 +1,16 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         
-        // Verify user is authenticated and is a driver
+        // Verify user is authenticated — only drivers and admins can update driver status
         const user = await base44.auth.me();
         if (!user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        if (user.role !== 'admin' && user.appRole !== 'driver') {
+            return Response.json({ error: 'Forbidden: Only drivers can update job status' }, { status: 403 });
         }
 
         const { jobId, driverStatus, problemDetails, etaMinutes, routeDistance, latitude, longitude } = await req.json();

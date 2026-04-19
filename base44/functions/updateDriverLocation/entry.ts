@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
     try {
@@ -8,6 +8,9 @@ Deno.serve(async (req) => {
         const user = await base44.auth.me();
         if (!user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        if (user.role !== 'admin' && user.appRole !== 'driver') {
+            return Response.json({ error: 'Forbidden: Only drivers can update location' }, { status: 403 });
         }
 
         const { latitude, longitude, accuracy, speed, heading } = await req.json();

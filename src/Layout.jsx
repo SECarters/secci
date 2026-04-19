@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 
 import ReturnedJobAlert from './components/scheduling/ReturnedJobAlert';
+import NotificationBell from './components/NotificationBell';
 
 const NavLink = ({ to, icon: Icon, children, collapsed, onClick }) => {
   const location = useLocation();
@@ -432,7 +433,7 @@ export default function Layout({ children, currentPageName }) {
 
     const appRole = user.appRole;
 
-    console.log('Rendering nav for appRole:', appRole);
+
 
     switch (appRole) {
       case 'dispatcher':
@@ -658,7 +659,7 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Desktop header with notification bell */}
           <div className="hidden md:flex items-center justify-end px-6 py-3 bg-white border-b">
-            {/* NotificationBell was here */}
+            <NotificationBell />
           </div>
 
           <main className="flex-1 overflow-y-auto p-6">

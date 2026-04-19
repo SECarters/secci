@@ -1,8 +1,18 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // This function is intended to be called by a scheduled automation (admin context)
+    // or by admins/dispatchers only
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (user.role !== 'admin' && user.appRole !== 'dispatcher') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Define the threshold (in hours) for a job to be considered "old"
     const HOURS_THRESHOLD = 24;
@@ -70,15 +80,23 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create all notifications
-    if (notificationsToCreate.length > 0) {
-      await base44.asServiceRole.entities.Notification.bulkCreate(notificationsToCreate);
+    // Deduplicate: only create notifications if there isn't already an unread one for this job
+    const existingNotifications = await base44.asServiceRole.entities.Notification.filter({
+      type: 'unassigned_job_alert',
+      isRead: false
+    });
+    const existingJobIds = new Set(existingNotifications.map(n => n.jobId));
+
+    const deduplicatedNotifications = notificationsToCreate.filter(n => !existingJobIds.has(n.jobId));
+
+    if (deduplicatedNotifications.length > 0) {
+      await base44.asServiceRole.entities.Notification.bulkCreate(deduplicatedNotifications);
     }
 
     return Response.json({ 
       success: true, 
       staleJobsFound: staleUnassignedJobs.length,
-      notificationsCreated: notificationsToCreate.length 
+      notificationsCreated: deduplicatedNotifications.length 
     });
 
   } catch (error) {

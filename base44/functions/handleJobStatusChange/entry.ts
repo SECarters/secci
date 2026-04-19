@@ -1,8 +1,18 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Verify the caller is authenticated and has an allowed role
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (user.role !== 'admin' && !['dispatcher', 'driver', 'manager'].includes(user.appRole)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { jobId, oldStatus, newStatus } = await req.json();
 
     if (!jobId || !newStatus) {

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { GoogleGenAI } from 'npm:@google/genai';
 
 Deno.serve(async (req) => {
@@ -158,8 +158,7 @@ Extract ALL line items. Use null for missing fields. Return ONLY valid JSON.`;
             console.error('Failed to parse Gemini response:', response.text.substring(0, 500));
             return Response.json({ 
                 success: false,
-                error: 'Failed to parse extracted data',
-                rawResponse: response.text.substring(0, 500)
+                error: 'Failed to parse extracted data'
             }, { status: 500 });
         }
 

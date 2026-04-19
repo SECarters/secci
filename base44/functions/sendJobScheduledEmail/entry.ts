@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { Resend } from 'npm:resend@4.0.0';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
                         
                         <div class="detail-row">
                             <span class="label">Site Contact:</span>
-                            <span class="value">${job.siteContactName} - ${job.siteContactPhone}</span>
+                            <span class="value">${job.siteContactName || 'N/A'} - ${job.siteContactPhone || 'N/A'}</span>
                         </div>
                         
                         <p style="margin-top: 20px;">Please note: Delivery times may change due to operational factors. We’ll notify you promptly if adjustments are required. Thank you for choosing South East Carters — we appreciate your business.</p>

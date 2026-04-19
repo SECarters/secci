@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
@@ -15,6 +15,11 @@ Deno.serve(async (req) => {
 
         if (!fileUrl) {
             return Response.json({ error: 'No file URL provided' }, { status: 400 });
+        }
+
+        // Validate fileUrl to prevent SSRF
+        if (!fileUrl.startsWith('https://')) {
+            return Response.json({ error: 'Invalid file URL: must be a secure HTTPS URL' }, { status: 400 });
         }
 
         // Get API key from secrets

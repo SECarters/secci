@@ -1,8 +1,9 @@
-
-import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
-import { Resend } from 'npm:resend'; // Changed from 'import Resend from ...'
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { Resend } from 'npm:resend@4.0.0';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+
+const esc = (s) => s ? String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : '';
 
 Deno.serve(async (req) => {
     try {
@@ -61,30 +62,30 @@ Deno.serve(async (req) => {
                         <h1>⚠️ Delivery Returned</h1>
                     </div>
                     <div class="content">
-                        <p>Hi ${customer.customerName},</p>
+                        <p>Hi ${esc(customer.customerName)},</p>
                         <p><span class="warning-badge">Delivery Returned to Supplier</span></p>
                         <p>Unfortunately, your delivery could not be completed and has been returned to the supplier.</p>
                         
                         <div class="detail-row">
                             <span class="label">Delivery Location:</span>
-                            <span class="value">${job.deliveryLocation}</span>
+                            <span class="value">${esc(job.deliveryLocation)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Return Reason:</span>
-                            <span class="value">${job.returnReason || 'Not specified'}</span>
+                            <span class="value">${esc(job.returnReason) || 'Not specified'}</span>
                         </div>
                         
                         ${job.returnNotes ? `
                         <div class="detail-row">
                             <span class="label">Additional Details:</span>
-                            <span class="value">${job.returnNotes}</span>
+                            <span class="value">${esc(job.returnNotes)}</span>
                         </div>
                         ` : ''}
                         
                         <div class="detail-row">
                             <span class="label">Returned By:</span>
-                            <span class="value">${job.returnedBy || 'Driver'}</span>
+                            <span class="value">${esc(job.returnedBy) || 'Driver'}</span>
                         </div>
                         
                         <p style="margin-top: 20px; padding: 15px; background-color: #fef3c7; border-radius: 4px; border-left: 4px solid #f59e0b;">

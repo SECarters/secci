@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
     try {
@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
         }
 
         // Simply use the latest image from BOM
-        const radarUrl = 'http://www.bom.gov.au/radar/IDR663.T.latest.png';
+        const radarUrl = 'https://www.bom.gov.au/radar/IDR663.T.latest.png';
         
         console.log('Fetching radar image from:', radarUrl);
         

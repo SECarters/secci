@@ -1,8 +1,9 @@
-
-import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
-import { Resend } from 'npm:resend';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { Resend } from 'npm:resend@4.0.0';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+
+const esc = (s) => s ? String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : '';
 
 Deno.serve(async (req) => {
     try {
@@ -64,22 +65,22 @@ Deno.serve(async (req) => {
                         
                         <div class="detail-row">
                             <span class="label">Customer:</span>
-                            <span class="value">${job.customerName}</span>
+                            <span class="value">${esc(job.customerName)}</span>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Delivery Location:</span>
-                            <span class="value">${job.deliveryLocation}</span>
+                            <span class="value">${esc(job.deliveryLocation)}</span>
                         </div>
                         
                         <div class="notes-box">
                             <h3 style="margin: 0 0 10px 0; color: #92400e;">Driver's Notes:</h3>
-                            <p style="margin: 0; white-space: pre-wrap;">${job.podNotes}</p>
+                            <p style="margin: 0; white-space: pre-wrap;">${esc(job.podNotes)}</p>
                         </div>
                         
                         <div class="detail-row">
                             <span class="label">Submitted By:</span>
-                            <span class="value">${job.updated_by || 'Driver'}</span>
+                            <span class="value">${esc(job.updated_by) || 'Driver'}</span>
                         </div>
                         
                         <p style="margin-top: 20px; padding: 15px; background-color: #fee2e2; border-radius: 4px; border-left: 4px solid #dc2626;">
