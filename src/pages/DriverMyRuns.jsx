@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, MapPin, Package, Clock, Navigation, AlertTriangle, CheckCircle2, Truck as TruckIcon, Radio, AlertCircle, ExternalLink, RefreshCw, WifiOff } from 'lucide-react';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
-import LocationTracker from '../components/tracking/LocationTracker';
 import { useToast } from '@/components/ui/use-toast';
 import { updateJobStatus } from '@/functions/updateJobStatus';
 import { useOffline } from '../components/offline/OfflineManager';
@@ -351,19 +350,6 @@ export default function DriverMyRuns() {
       title: "Delay Timer Started",
       description: `Tracking ${delayType === 'pickup' ? 'pickup' : 'site'} delay...`,
     });
-  };
-
-  const formatDelayTimer = (startTime) => {
-    const [, forceUpdate] = useState({});
-    useEffect(() => {
-      const interval = setInterval(() => forceUpdate({}), 1000);
-      return () => clearInterval(interval);
-    }, []);
-
-    const duration = Math.floor((Date.now() - startTime) / 1000);
-    const minutes = Math.floor(duration / 60);
-    const seconds = duration % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const handleTruckChange = async (newTruckId) => {
@@ -722,7 +708,7 @@ export default function DriverMyRuns() {
         </Card>
       )}
 
-      <LocationTracker />
+      
 
       {/* Today's Jobs */}
       {currentUser?.truck && (

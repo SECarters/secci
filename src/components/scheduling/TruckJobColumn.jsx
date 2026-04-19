@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Truck } from 'lucide-react';
+import { Droppable, Draggable } from '@hello-pangea/dnd';
 import JobCard from './JobCard';
 import { Badge } from '@/components/ui/badge';
 

@@ -216,7 +216,7 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
           const currentNotes = docketNotes.slice(0, numUnits);
 
           setDocketNumbers([...currentDockets, ...Array(Math.max(0, numUnits - currentDockets.length)).fill('')]);
-          setDocketNotes([...currentNotes, ...Array(Math.max(0, numNotes.length)).fill('')]);
+          setDocketNotes([...currentNotes, ...Array(Math.max(0, numUnits - currentNotes.length)).fill('')]);
         } else {
           setDocketNumbers([]);
           setDocketNotes([]);

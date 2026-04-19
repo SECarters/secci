@@ -1,6 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Package } from 'lucide-react';
+import { Droppable, Draggable } from '@hello-pangea/dnd';
 import JobCard from './JobCard';
 
 export default function UnassignedQueue({ jobs }) {

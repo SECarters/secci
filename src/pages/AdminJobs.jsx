@@ -327,7 +327,7 @@ export default function AdminJobsPage() {
                 {filteredJobs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={isCustomer ? 6 : 7} className="text-center py-8 text-gray-500">
-                      {hasActiveFilters ? 'No jobs found matching your search criteria' : 'No jobs found'}
+                      {(searchQuery.trim() || filters.status !== 'all' || filters.deliveryType !== 'all' || filters.truck !== 'all' || filters.dateFrom || filters.dateTo) ? 'No jobs found matching your search criteria' : 'No jobs found'}
                     </TableCell>
                   </TableRow>
                 ) : (
