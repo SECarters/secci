@@ -36,16 +36,16 @@ Deno.serve(async (req) => {
                 delivery_notes: { type: "string", description: "Any delivery instructions or notes" },
                 line_items: {
                     type: "array",
-                    description: "Every line item/product row in the document. Extract ALL rows.",
+                    description: "Extract EVERY row from the sheet list table, including section subheadings and table breaks (e.g. 'FIRST FLOOR - MANITOU', 'GROUND FLOOR - HAND UNLOAD'). These section headers must be included as their own entries with the subheading text as the product_description and no quantity/weight. Do NOT skip any rows.",
                     items: {
                         type: "object",
                         properties: {
-                            product_code: { type: "string", description: "Product code or SKU" },
-                            product_description: { type: "string", description: "Full product description including dimensions and type (e.g. '2400x1200x10mm Std White Board')" },
-                            quantity: { type: "number", description: "Number of units/sheets for this line item" },
-                            unit: { type: "string", description: "Unit of measure (e.g. 'Sheet', 'Pcs', 'Lm')" },
-                            m2: { type: "number", description: "Square metres for this line item. Calculate as quantity × m2_per_unit if not shown directly." },
-                            weight: { type: "number", description: "Weight in kilograms for this line item. Extract directly from the 'Weight' column. This is the TOTAL weight for the row (already multiplied by quantity). Do NOT leave blank — if a Weight column exists in the document, every row must have a value." }
+                            product_code: { type: "string", description: "Product code or SKU. Leave blank for section header rows." },
+                            product_description: { type: "string", description: "Full product description including dimensions and type (e.g. '2400x1200x10mm Std White Board'). For section header/subheading rows, use the full subheading text (e.g. 'FIRST FLOOR - MANITOU')." },
+                            quantity: { type: "number", description: "Number of units/sheets for this line item. Omit for section header rows." },
+                            unit: { type: "string", description: "Unit of measure (e.g. 'Sheet', 'Pcs', 'Lm'). Omit for section header rows." },
+                            m2: { type: "number", description: "Square metres for this line item. Calculate as quantity × m2_per_unit if not shown directly. Omit for section header rows." },
+                            weight: { type: "number", description: "Weight in kilograms for this line item. Extract directly from the 'Weight' column. This is the TOTAL weight for the row (already multiplied by quantity). Do NOT leave blank for product rows — if a Weight column exists, every product row must have a value. Omit for section header rows." }
                         }
                     }
                 }
