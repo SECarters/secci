@@ -244,26 +244,10 @@ export default function DriverMyRuns() {
 
     setUpdatingStatus(true);
     try {
-      let locationData = {};
-      if (navigator.geolocation) {
-        try {
-          const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-          });
-          locationData = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          };
-        } catch (e) {
-          console.log('Could not get location for status update');
-        }
-      }
-
       await updateJobStatus({
         jobId: selectedJob.id,
         driverStatus: selectedStatus,
         problemDetails: selectedStatus === 'PROBLEM' ? problemDetails : undefined,
-        ...locationData
       });
 
       toast({
