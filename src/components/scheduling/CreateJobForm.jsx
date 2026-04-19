@@ -395,8 +395,11 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         if (extracted.total_m2) {
           updates.sqm = extracted.total_m2;
         }
-        if (extracted.total_weight) {
-          updates.weightKg = extracted.total_weight;
+        // Use total_weight directly, or sum line item weights as fallback
+        const lineItemWeightSum = (extracted.line_items || []).reduce((sum, item) => sum + (item.weight || 0), 0);
+        const resolvedWeight = extracted.total_weight || (lineItemWeightSum > 0 ? lineItemWeightSum : null);
+        if (resolvedWeight) {
+          updates.weightKg = resolvedWeight;
         }
         if (extracted.total_sheets) {
           updates.totalSheetQty = extracted.total_sheets;

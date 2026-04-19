@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
                 site_contact: { type: "string", description: "Site contact person name" },
                 site_contact_phone: { type: "string", description: "Site contact phone number" },
                 total_m2: { type: "number", description: "Total square metres across all line items" },
-                total_weight: { type: "number", description: "Total weight in kilograms across all line items. If not explicitly shown, sum the weight values from all line items." },
+                total_weight: { type: "number", description: "Total weight in kilograms. Look for a 'Weight' column total or footer row. If not present, sum the weight column values from all line items." },
                 total_sheets: { type: "number", description: "Total number of sheets/boards/pieces across all line items" },
                 delivery_notes: { type: "string", description: "Any delivery instructions or notes" },
                 line_items: {
@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
                             quantity: { type: "number", description: "Number of units/sheets for this line item" },
                             unit: { type: "string", description: "Unit of measure (e.g. 'Sheet', 'Pcs', 'Lm')" },
                             m2: { type: "number", description: "Square metres for this line item. Calculate as quantity × m2_per_unit if not shown directly." },
-                            weight: { type: "number", description: "Weight in kilograms for this line item total. Look for columns labelled Weight, Wt, kg, Mass, Nett Weight, Gross Weight. Calculate as quantity × weight_per_unit if a unit weight is given. Do NOT leave blank if any weight information is present in the document." }
+                            weight: { type: "number", description: "Weight in kilograms for this line item. Extract directly from the 'Weight' column. This is the TOTAL weight for the row (already multiplied by quantity). Do NOT leave blank — if a Weight column exists in the document, every row must have a value." }
                         }
                     }
                 }
